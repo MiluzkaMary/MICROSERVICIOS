@@ -1,4 +1,4 @@
-# Node modules
+﻿# Node modules
 node_modules/
 
 # Logs
@@ -29,3 +29,6 @@ build/
 
 # Coverage
 coverage/
+
+# Docker volumes (datos locales de PostgreSQL)
+postgres_data/
