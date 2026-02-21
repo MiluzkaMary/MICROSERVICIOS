@@ -10,7 +10,11 @@ class EmpleadoController {
 
     if (!resultado.success) {
       return res.status(resultado.statusCode).json({
+        error: this._getErrorName(resultado.statusCode),
         message: resultado.message,
+        status: resultado.statusCode,
+        path: req.originalUrl,
+        timestamp: new Date().toISOString(),
         errors: resultado.errors
       });
     }
@@ -26,7 +30,13 @@ class EmpleadoController {
     const resultado = await empleadoService.obtenerEmpleadoPorId(id);
 
     if (!resultado.success) {
-      return res.status(resultado.statusCode).send(resultado.message);
+      return res.status(resultado.statusCode).json({
+        error: this._getErrorName(resultado.statusCode),
+        message: resultado.message,
+        status: resultado.statusCode,
+        path: req.originalUrl,
+        timestamp: new Date().toISOString()
+      });
     }
 
     return res.status(resultado.statusCode).json(resultado.data);
@@ -34,15 +44,37 @@ class EmpleadoController {
 
   /**
    * GET /empleados 
+   * Soporta paginación y filtrado mediante query parameters
    */
   async obtenerTodos(req, res) {
-    const resultado = await empleadoService.obtenerTodosEmpleados();
+    // Siempre usar paginación (por defecto page=1, limit=10)
+    const resultado = await empleadoService.obtenerEmpleadosConPaginacion(req.query);
 
     if (!resultado.success) {
-      return res.status(resultado.statusCode).send(resultado.message);
+      return res.status(resultado.statusCode).json({
+        error: this._getErrorName(resultado.statusCode),
+        message: resultado.message,
+        status: resultado.statusCode,
+        path: req.originalUrl,
+        timestamp: new Date().toISOString()
+      });
     }
 
     return res.status(resultado.statusCode).json(resultado.data);
+  }
+
+  /**
+   * Helper para obtener nombre de error según código HTTP
+   * @private
+   */
+  _getErrorName(statusCode) {
+    const errorNames = {
+      400: 'Bad Request',
+      404: 'Not Found',
+      409: 'Conflict',
+      500: 'Internal Server Error'
+    };
+    return errorNames[statusCode] || 'Error';
   }
 }
 

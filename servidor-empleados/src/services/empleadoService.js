@@ -49,7 +49,7 @@ class EmpleadoService {
 
       return {
         success: true,
-        statusCode: 200,
+        statusCode: 201,
         data: empleadoCreado.toJSON()
       };
     } catch (error) {
@@ -81,7 +81,7 @@ class EmpleadoService {
 
       return {
         success: true,
-        statusCode: 200,
+        statusCode: 201,
         data: empleado.toJSON()
       };
     } catch (error) {
@@ -104,11 +104,67 @@ class EmpleadoService {
 
       return {
         success: true,
-        statusCode: 200,
+        statusCode: 201,
         data: empleados.map(emp => emp.toJSON())
       };
     } catch (error) {
       console.error('Error al obtener empleados:', error);
+      return {
+        success: false,
+        statusCode: 500,
+        message: 'Error interno al obtener los empleados'
+      };
+    }
+  }
+
+  /**
+   * Obtiene empleados con paginación y filtrado
+   * @param {Object} filtros - Filtros y opciones de paginación
+   * @returns {Promise<Object>} Resultado de la operación
+   */
+  async obtenerEmpleadosConPaginacion(filtros) {
+    try {
+      // Validar y parsear parámetros con valores seguros
+      const page = Math.max(parseInt(filtros.page || "1", 10), 1);
+      const size = Math.min(Math.max(parseInt(filtros.size || "10", 10), 1), 100);
+
+      // Preparar filtros sanitizados
+      const q = (filtros.q || "").trim().toLowerCase();
+      const estado = (filtros.estado || "").trim();
+      const area = (filtros.area || "").trim().toLowerCase();
+      const cargo = (filtros.cargo || "").trim().toLowerCase();
+      const nombre = (filtros.nombre || "").trim().toLowerCase();
+      const apellido = (filtros.apellido || "").trim().toLowerCase();
+
+      // Preparar opciones
+      const opciones = {
+        page,
+        size,
+        sortBy: filtros.sortBy || 'id',
+        order: filtros.order || 'ASC',
+        q: q || undefined,
+        nombre: nombre || undefined,
+        apellido: apellido || undefined,
+        cargo: cargo || undefined,
+        area: area || undefined,
+        estado: estado || undefined
+      };
+
+      const resultado = await empleadoRepository.obtenerConPaginacion(opciones);
+
+      return {
+        success: true,
+        statusCode: 201,
+        data: {
+          page: resultado.page,
+          size: resultado.size,
+          totalRecords: resultado.totalRecords,
+          totalPages: resultado.totalPages,
+          items: resultado.items.map(emp => emp.toJSON())
+        }
+      };
+    } catch (error) {
+      console.error('Error al obtener empleados con paginación:', error);
       return {
         success: false,
         statusCode: 500,

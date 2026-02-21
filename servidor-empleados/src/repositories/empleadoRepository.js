@@ -74,6 +74,109 @@ class EmpleadoRepository {
   }
 
   /**
+   * Obtiene empleados con paginación y filtrado
+   * @param {Object} opciones - Opciones de paginación y filtrado
+   * @returns {Promise<Object>} Objeto con datos y metadata de paginación
+   */
+  async obtenerConPaginacion(opciones = {}) {
+    const {
+      page = 1,
+      size = 10,
+      sortBy = 'id',
+      order = 'ASC',
+      q,
+      nombre,
+      apellido,
+      cargo,
+      area,
+      estado
+    } = opciones;
+
+    // Construir la cláusula WHERE dinámicamente
+    const condiciones = [];
+    const valores = [];
+    let paramIndex = 1;
+
+    // Búsqueda general con parámetro 'q' en múltiples campos
+    if (q) {
+      condiciones.push(`(
+        nombre ILIKE $${paramIndex} OR 
+        apellido ILIKE $${paramIndex} OR 
+        email ILIKE $${paramIndex} OR 
+        numero_empleado ILIKE $${paramIndex}
+      )`);
+      valores.push(`%${q}%`);
+      paramIndex++;
+    }
+
+    if (nombre) {
+      condiciones.push(`nombre ILIKE $${paramIndex}`);
+      valores.push(`%${nombre}%`);
+      paramIndex++;
+    }
+
+    if (apellido) {
+      condiciones.push(`apellido ILIKE $${paramIndex}`);
+      valores.push(`%${apellido}%`);
+      paramIndex++;
+    }
+
+    if (cargo) {
+      condiciones.push(`cargo ILIKE $${paramIndex}`);
+      valores.push(`%${cargo}%`);
+      paramIndex++;
+    }
+
+    if (area) {
+      condiciones.push(`area ILIKE $${paramIndex}`);
+      valores.push(`%${area}%`);
+      paramIndex++;
+    }
+
+    if (estado) {
+      condiciones.push(`estado = $${paramIndex}`);
+      valores.push(estado);
+      paramIndex++;
+    }
+
+    const whereClause = condiciones.length > 0 ? `WHERE ${condiciones.join(' AND ')}` : '';
+
+    // Validar campo de ordenamiento para prevenir SQL injection
+    const camposPermitidos = ['id', 'nombre', 'apellido', 'email', 'numero_empleado', 'cargo', 'area', 'estado'];
+    const campoOrden = camposPermitidos.includes(sortBy) ? sortBy : 'id';
+    const direccionOrden = order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+
+    // Consulta para contar el total de registros
+    const countQuery = `SELECT COUNT(*) as total FROM empleados ${whereClause}`;
+    const countResult = await db.query(countQuery, valores);
+    const totalRegistros = parseInt(countResult.rows[0].total);
+
+    // Calcular offset
+    const offset = (page - 1) * size;
+
+    // Consulta para obtener los datos paginados
+    const dataQuery = `
+      SELECT * FROM empleados
+      ${whereClause}
+      ORDER BY ${campoOrden} ${direccionOrden}
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+    
+    const dataResult = await db.query(dataQuery, [...valores, size, offset]);
+
+    // Calcular metadata
+    const totalPaginas = Math.max(Math.ceil(totalRegistros / size), 1);
+
+    return {
+      items: dataResult.rows.map(row => this._mapearEmpleado(row)),
+      page,
+      size,
+      totalRecords: totalRegistros,
+      totalPages: totalPaginas
+    };
+  }
+
+  /**
    * Actualiza un empleado
    * @param {string} id - ID del empleado
    * @param {Object} datos - Datos a actualizar
