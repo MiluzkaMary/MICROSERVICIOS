@@ -1,0 +1,14 @@
+{
+  "name": "servidor-departamentos",
+  "version": "1.0.0",
+  "main": "index.js",
+  "type": "commonjs",
+  "scripts": {
+    "start": "node index.js",
+    "dev": "node index.js"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "pg": "^8.11.3"
+  }
+}

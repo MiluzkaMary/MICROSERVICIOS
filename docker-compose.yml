@@ -1,0 +1,88 @@
+version: '3.9'
+
+services:
+  empleados-service:
+    build:
+      context: ./servidor-empleados
+      dockerfile: Dockerfile
+    container_name: empleados-app
+    restart: unless-stopped
+    environment:
+      - DB_HOST=database-empleados
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=empleados_db
+    ports:
+      - "3000:3000"
+    depends_on:
+      - database-empleados
+    networks:
+      - microservicios-network
+
+  database-empleados:
+    image: postgres:15-alpine
+    container_name: empleados-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: empleados_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - empleados_data:/var/lib/postgresql/data
+      - ./servidor-empleados/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - microservicios-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  departamentos-service:
+    build:
+      context: ./servidor-departamentos
+      dockerfile: Dockerfile
+    container_name: departamentos-app
+    restart: unless-stopped
+    environment:
+      - DB_HOST=database-departamentos
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=departamentos_db
+    ports:
+      - "3001:3001"
+    depends_on:
+      - database-departamentos
+    networks:
+      - microservicios-network
+
+  database-departamentos:
+    image: postgres:15-alpine
+    container_name: departamentos-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: departamentos_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - departamentos_data:/var/lib/postgresql/data
+      - ./servidor-departamentos/init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - microservicios-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  microservicios-network:
+    driver: bridge
+
+volumes:
+  empleados_data:
+  departamentos_data:
