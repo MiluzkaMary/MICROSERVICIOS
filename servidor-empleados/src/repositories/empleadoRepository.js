@@ -231,12 +231,9 @@ class EmpleadoRepository {
     return new Empleado({
       id: row.id,
       nombre: row.nombre,
-      apellido: row.apellido,
       email: row.email,
-      numeroEmpleado: row.numero_empleado,
-      cargo: row.cargo,
-      area: row.area,
-      estado: row.estado
+      departamentoId: row.departamento_id,
+      fechaIngreso: row.fecha_ingreso
     });
   }
 }

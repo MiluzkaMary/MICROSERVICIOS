@@ -18,31 +18,19 @@ function validarEmpleado(empleado) {
   if (isBlank(empleado.id)) {
     errores.push("id es requerido");
   }
-  
   if (isBlank(empleado.nombre)) {
     errores.push("nombre es requerido");
   }
-  
-  if (isBlank(empleado.apellido)) {
-    errores.push("apellido es requerido");
-  }
-  
   if (isBlank(empleado.email)) {
     errores.push("email es requerido");
   } else if (!emailBasicoValido(empleado.email)) {
     errores.push("email inválido");
   }
-  
-  if (isBlank(empleado.numeroEmpleado)) {
-    errores.push("numeroEmpleado es requerido");
+  if (isBlank(empleado.departamentoId)) {
+    errores.push("departamentoId es requerido");
   }
-  
-  if (isBlank(empleado.cargo)) {
-    errores.push("cargo es requerido");
-  }
-  
-  if (isBlank(empleado.area)) {
-    errores.push("area es requerido");
+  if (!empleado.fechaIngreso) {
+    errores.push("fechaIngreso es requerido");
   }
 
   return errores;

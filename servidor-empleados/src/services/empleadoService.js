@@ -23,7 +23,28 @@ class EmpleadoService {
       };
     }
 
+    // Validar departamento vía REST
     try {
+      const fetch = require('node-fetch');
+      const depUrl = `http://departamentos-service:3001/departamentos/${empleado.departamentoId}`;
+      const depResp = await fetch(depUrl);
+      if (depResp.status === 404) {
+        return {
+          success: false,
+          statusCode: 400,
+          message: `El departamento con id ${empleado.departamentoId} no existe`,
+          errors: ["departamentoId inválido"]
+        };
+      }
+      if (!depResp.ok) {
+        return {
+          success: false,
+          statusCode: 502,
+          message: "Error consultando servicio de departamentos",
+          errors: ["departamentoId no validado"]
+        };
+      }
+
       // Verificar duplicados por ID
       const empleadoExistentePorId = await empleadoRepository.buscarPorId(empleado.id);
       if (empleadoExistentePorId) {
