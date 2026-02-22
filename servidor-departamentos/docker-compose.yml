@@ -1,0 +1,49 @@
+version: '3.9'
+
+services:
+  departamentos-service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: departamentos-app
+    restart: unless-stopped
+    environment:
+      - DB_HOST=database-departamentos
+      - DB_USER=postgres
+      - DB_PASSWORD=postgres
+      - DB_NAME=departamentos_db
+      - DB_PORT=5432
+    ports:
+      - "3001:3001"
+    depends_on:
+      - database-departamentos
+    networks:
+      - departamentos-network
+
+  database-departamentos:
+    image: postgres:15-alpine
+    container_name: departamentos-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: departamentos_db
+    ports:
+      - "5433:5432"
+    volumes:
+      - departamentos_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - departamentos-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+networks:
+  departamentos-network:
+    driver: bridge
+
+volumes:
+  departamentos_data:
