@@ -1,31 +1,80 @@
 const departamentoService = require('../services/departamentoService');
 
-exports.crearDepartamento = async (req, res) => {
-  try {
-    const departamento = await departamentoService.crearDepartamento(req.body);
-    res.status(201).json(departamento);
-  } catch (error) {
-    res.status(400).json({ mensaje: error.message });
-  }
-};
+class DepartamentoController {
+  /**
+   * POST /departamentos 
+   */
+  async crear(req, res) {
+    const resultado = await departamentoService.crearDepartamento(req.body || {});
 
-exports.listarDepartamentos = async (req, res) => {
-  try {
-    const departamentos = await departamentoService.listarDepartamentos();
-    res.status(200).json(departamentos);
-  } catch (error) {
-    res.status(500).json({ mensaje: error.message });
-  }
-};
-
-exports.obtenerDepartamentoPorId = async (req, res) => {
-  try {
-    const departamento = await departamentoService.obtenerDepartamentoPorId(req.params.id);
-    if (!departamento) {
-      return res.status(404).json({ mensaje: 'Departamento no encontrado' });
+    if (!resultado.success) {
+      return res.status(resultado.statusCode).json({
+        error: this._getErrorName(resultado.statusCode),
+        message: resultado.message,
+        status: resultado.statusCode,
+        path: req.originalUrl,
+        timestamp: new Date().toISOString(),
+        errors: resultado.errors
+      });
     }
-    res.status(200).json(departamento);
-  } catch (error) {
-    res.status(500).json({ mensaje: error.message });
+
+    return res.status(resultado.statusCode).json(resultado.data);
   }
-};
+
+  /**
+   * GET /departamentos/:id 
+   */
+  async obtenerPorId(req, res) {
+    const id = parseInt(req.params.id, 10);
+    const resultado = await departamentoService.obtenerDepartamentoPorId(id);
+
+    if (!resultado.success) {
+      return res.status(resultado.statusCode).json({
+        error: this._getErrorName(resultado.statusCode),
+        message: resultado.message,
+        status: resultado.statusCode,
+        path: req.originalUrl,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    return res.status(resultado.statusCode).json(resultado.data);
+  }
+
+  /**
+   * GET /departamentos 
+   * Soporta paginación y filtrado mediante query parameters
+   */
+  async obtenerTodos(req, res) {
+    // Siempre usar paginación (por defecto page=1, limit=10)
+    const resultado = await departamentoService.obtenerDepartamentosConPaginacion(req.query);
+
+    if (!resultado.success) {
+      return res.status(resultado.statusCode).json({
+        error: this._getErrorName(resultado.statusCode),
+        message: resultado.message,
+        status: resultado.statusCode,
+        path: req.originalUrl,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    return res.status(resultado.statusCode).json(resultado.data);
+  }
+
+  /**
+   * Helper para obtener nombre de error según código HTTP
+   * @private
+   */
+  _getErrorName(statusCode) {
+    const errorNames = {
+      400: 'Bad Request',
+      404: 'Not Found',
+      409: 'Conflict',
+      500: 'Internal Server Error'
+    };
+    return errorNames[statusCode] || 'Error';
+  }
+}
+
+module.exports = new DepartamentoController();

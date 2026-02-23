@@ -1,6 +1,7 @@
 const empleadoRepository = require('../repositories/empleadoRepository');
 const { validarEmpleado } = require('../validators/empleadoValidator');
 const Empleado = require('../models/empleado');
+const { httpGet } = require('../utils/httpClient');
 
 class EmpleadoService {
   /**
@@ -23,25 +24,53 @@ class EmpleadoService {
       };
     }
 
-    // Validar departamento vía REST
+    // Validar que el departamento existe (comunicación entre servicios)
     try {
-      const fetch = require('node-fetch');
-      const depUrl = `http://departamentos-service:3001/departamentos/${empleado.departamentoId}`;
-      const depResp = await fetch(depUrl);
-      if (depResp.status === 404) {
+      // Obtener URL del servicio de departamentos desde variables de entorno
+      const departamentosHost = process.env.DEPARTAMENTOS_SERVICE_HOST || 'departamentos-service';
+      const departamentosPort = process.env.DEPARTAMENTOS_SERVICE_PORT || '8081';
+      const departamentoUrl = `http://${departamentosHost}:${departamentosPort}/departamentos/${empleado.departamentoId}`;
+
+      console.log(`Validando departamento ${empleado.departamentoId} en ${departamentoUrl}`);
+
+      let departamentoResponse;
+      try {
+        // Hacer petición con timeout de 3s y 2 reintentos
+        departamentoResponse = await httpGet(departamentoUrl, {
+          timeout: 3000,
+          retries: 2,
+          retryDelay: 500
+        });
+      } catch (error) {
+        // Error de red, timeout o servicio caído
+        console.error('Error comunicándose con servicio de departamentos:', error.message);
+        return {
+          success: false,
+          statusCode: 503,
+          message: 'Servicio de departamentos no disponible. Intente nuevamente más tarde.',
+          errors: ['El servicio de validación de departamentos no está respondiendo']
+        };
+      }
+
+      // Validar respuesta del servicio de departamentos
+      if (departamentoResponse.statusCode === 404) {
         return {
           success: false,
           statusCode: 400,
           message: `El departamento con id ${empleado.departamentoId} no existe`,
-          errors: ["departamentoId inválido"]
+          errors: ['departamentoId inválido']
         };
       }
-      if (!depResp.ok) {
+
+      if (departamentoResponse.statusCode === 201 || departamentoResponse.statusCode === 200) {
+        console.log(`Departamento ${empleado.departamentoId} validado correctamente`);
+      } else {
+        // Cualquier otro código de error del servicio de departamentos
         return {
           success: false,
           statusCode: 502,
-          message: "Error consultando servicio de departamentos",
-          errors: ["departamentoId no validado"]
+          message: 'Error validando departamento en el servicio externo',
+          errors: ['No se pudo validar el departamento']
         };
       }
 

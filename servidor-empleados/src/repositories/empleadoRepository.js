@@ -10,20 +10,17 @@ class EmpleadoRepository {
    */
   async crear(empleado) {
     const query = `
-      INSERT INTO empleados (id, nombre, apellido, email, numero_empleado, cargo, area, estado)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
+      INSERT INTO empleados (id, nombre, email, departamento_id, fecha_ingreso)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING *
     `;
     
     const values = [
       empleado.id,
       empleado.nombre,
-      empleado.apellido,
       empleado.email,
-      empleado.numeroEmpleado,
-      empleado.cargo,
-      empleado.area,
-      empleado.estado
+      empleado.departamentoId,
+      empleado.fechaIngreso
     ];
 
     const result = await db.query(query, values);
@@ -86,10 +83,7 @@ class EmpleadoRepository {
       order = 'ASC',
       q,
       nombre,
-      apellido,
-      cargo,
-      area,
-      estado
+      departamentoId
     } = opciones;
 
     // Construir la cláusula WHERE dinámicamente
@@ -101,9 +95,7 @@ class EmpleadoRepository {
     if (q) {
       condiciones.push(`(
         nombre ILIKE $${paramIndex} OR 
-        apellido ILIKE $${paramIndex} OR 
-        email ILIKE $${paramIndex} OR 
-        numero_empleado ILIKE $${paramIndex}
+        email ILIKE $${paramIndex}
       )`);
       valores.push(`%${q}%`);
       paramIndex++;
@@ -115,34 +107,16 @@ class EmpleadoRepository {
       paramIndex++;
     }
 
-    if (apellido) {
-      condiciones.push(`apellido ILIKE $${paramIndex}`);
-      valores.push(`%${apellido}%`);
-      paramIndex++;
-    }
-
-    if (cargo) {
-      condiciones.push(`cargo ILIKE $${paramIndex}`);
-      valores.push(`%${cargo}%`);
-      paramIndex++;
-    }
-
-    if (area) {
-      condiciones.push(`area ILIKE $${paramIndex}`);
-      valores.push(`%${area}%`);
-      paramIndex++;
-    }
-
-    if (estado) {
-      condiciones.push(`estado = $${paramIndex}`);
-      valores.push(estado);
+    if (departamentoId) {
+      condiciones.push(`departamento_id = $${paramIndex}`);
+      valores.push(departamentoId);
       paramIndex++;
     }
 
     const whereClause = condiciones.length > 0 ? `WHERE ${condiciones.join(' AND ')}` : '';
 
     // Validar campo de ordenamiento para prevenir SQL injection
-    const camposPermitidos = ['id', 'nombre', 'apellido', 'email', 'numero_empleado', 'cargo', 'area', 'estado'];
+    const camposPermitidos = ['id', 'nombre', 'email', 'departamento_id', 'fecha_ingreso'];
     const campoOrden = camposPermitidos.includes(sortBy) ? sortBy : 'id';
     const direccionOrden = order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 
@@ -185,20 +159,16 @@ class EmpleadoRepository {
   async actualizar(id, datos) {
     const query = `
       UPDATE empleados
-      SET nombre = $1, apellido = $2, email = $3, numero_empleado = $4,
-          cargo = $5, area = $6, estado = $7
-      WHERE id = $8
+      SET nombre = $1, email = $2, departamento_id = $3, fecha_ingreso = $4
+      WHERE id = $5
       RETURNING *
     `;
     
     const values = [
       datos.nombre,
-      datos.apellido,
       datos.email,
-      datos.numeroEmpleado,
-      datos.cargo,
-      datos.area,
-      datos.estado,
+      datos.departamentoId,
+      datos.fechaIngreso,
       id
     ];
 

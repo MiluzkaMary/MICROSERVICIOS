@@ -98,6 +98,52 @@ Todos los errores devuelven un formato JSON consistente:
 }
 ```
 
+## Configuración
+
+### Puerto
+- **Desarrollo local**: 8080
+- **Docker**: 8080 (interno y externo)
+
+### Base de Datos
+- **PostgreSQL 15 Alpine**
+- **Puerto externo**: 5432
+- **Puerto interno**: 5432
+- **Nombre**: empleados_db
+
+## Comunicación con Otros Servicios
+
+Este microservicio se comunica con el servicio de **Departamentos** para validar que el departamento existe antes de crear un empleado.
+
+### Flujo de Validación
+
+1. Cliente envía `POST /empleados` con `departamentoId`
+2. Empleados-service valida datos localmente
+3. Empleados-service hace `GET /departamentos/{departamentoId}` al servicio de departamentos
+4. **Si departamento existe (201)** → Empleado se crea exitosamente (201)
+5. **Si departamento no existe (404)** → Error 400 "departamento no existe"
+6. **Si servicio caído (timeout)** → Error 503 "servicio no disponible"
+
+### Características de Comunicación
+
+- **Timeout**: 3 segundos por petición
+- **Reintentos**: 2 intentos automáticos
+- **Delay entre reintentos**: 500ms
+- **Circuit breaker básico**: Falla rápido si el servicio está caído
+
+### Variables de Entorno para Comunicación
+
+```bash
+DEPARTAMENTOS_SERVICE_HOST=departamentos-service  # Nombre del contenedor
+DEPARTAMENTOS_SERVICE_PORT=8081                   # Puerto del servicio
+```
+
+### Códigos de Respuesta Específicos de Comunicación
+
+- `201 Created` - Empleado creado (departamento validado exitosamente)
+- `400 Bad Request` - Datos inválidos o departamento no existe
+- `503 Service Unavailable` - Servicio de departamentos no disponible
+- `502 Bad Gateway` - Error validando con servicio de departamentos
+
 **Códigos de error comunes:**
 - `400 Bad Request` - Datos inválidos en la petición
 - `404 Not Found` - Recurso no encontrado

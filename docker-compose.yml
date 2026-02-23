@@ -8,14 +8,23 @@ services:
     container_name: empleados-app
     restart: unless-stopped
     environment:
+      - PORT=8080
       - DB_HOST=database-empleados
+      - DB_PORT=5432
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=empleados_db
+      - NODE_ENV=production
+      # Configuración para comunicación con servicio de departamentos
+      - DEPARTAMENTOS_SERVICE_HOST=departamentos-service
+      - DEPARTAMENTOS_SERVICE_PORT=8081
     ports:
-      - "3000:3000"
+      - "8080:8080"
     depends_on:
-      - database-empleados
+      database-empleados:
+        condition: service_healthy
+      departamentos-service:
+        condition: service_started
     networks:
       - microservicios-network
 
@@ -47,14 +56,18 @@ services:
     container_name: departamentos-app
     restart: unless-stopped
     environment:
+      - PORT=8081
       - DB_HOST=database-departamentos
+      - DB_PORT=5432
       - DB_USER=postgres
       - DB_PASSWORD=postgres
       - DB_NAME=departamentos_db
+      - NODE_ENV=production
     ports:
-      - "3001:3001"
+      - "8081:8081"
     depends_on:
-      - database-departamentos
+      database-departamentos:
+        condition: service_healthy
     networks:
       - microservicios-network
 
