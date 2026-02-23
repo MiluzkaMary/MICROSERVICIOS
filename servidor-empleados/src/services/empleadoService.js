@@ -1,7 +1,7 @@
 const empleadoRepository = require('../repositories/empleadoRepository');
 const { validarEmpleado } = require('../validators/empleadoValidator');
 const Empleado = require('../models/empleado');
-const { httpGet } = require('../utils/httpClient');
+const { httpGetWithCircuitBreaker } = require('../utils/circuitBreakerClient');
 
 class EmpleadoService {
   /**
@@ -35,8 +35,8 @@ class EmpleadoService {
 
       let departamentoResponse;
       try {
-        // Hacer petición con timeout de 3s y 2 reintentos
-        departamentoResponse = await httpGet(departamentoUrl, {
+        // Hacer petición con Circuit Breaker para resiliencia
+        departamentoResponse = await httpGetWithCircuitBreaker(departamentoUrl, {
           timeout: 3000,
           retries: 2,
           retryDelay: 500
@@ -49,6 +49,16 @@ class EmpleadoService {
           statusCode: 503,
           message: 'Servicio de departamentos no disponible. Intente nuevamente más tarde.',
           errors: ['El servicio de validación de departamentos no está respondiendo']
+        };
+      }
+
+      // Si el Circuit Breaker está abierto, rechazar la operación
+      if (departamentoResponse.circuitBreakerOpen) {
+        return {
+          success: false,
+          statusCode: 503,
+          message: 'Servicio de departamentos temporalmente no disponible (Circuit Breaker activado)',
+          errors: ['El servicio está experimentando problemas. Intente nuevamente en unos momentos.']
         };
       }
 

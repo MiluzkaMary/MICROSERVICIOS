@@ -23,8 +23,10 @@ WORKDIR /app
 # Copiar node_modules de la etapa anterior
 COPY --from=dependencies /app/node_modules ./node_modules
 
-# Copiar código fuente
-COPY . .
+# Copiar código fuente específicamente
+COPY package*.json ./
+COPY index.js ./
+COPY src/ ./src/
 
 # Aquí se pueden agregar pasos de build/test en el futuro
 # Por ejemplo: RUN npm run build, RUN npm test, etc.

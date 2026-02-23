@@ -26,6 +26,21 @@ const departamentoController = require('../controllers/departamentoController');
  *         application/json:
  *           schema:
  *             $ref: '#/components/schemas/DepartamentoInput'
+ *           examples:
+ *             ejemplo1:
+ *               summary: Departamento de Tecnología
+ *               value:
+ *                 nombre: "Tecnología"
+ *                 descripcion: "Departamento de desarrollo de software e infraestructura"
+ *             ejemplo2:
+ *               summary: Departamento de Recursos Humanos
+ *               value:
+ *                 nombre: "Recursos Humanos"
+ *                 descripcion: "Gestión de personal y nómina"
+ *             ejemplo3:
+ *               summary: Solo nombre (sin descripción)
+ *               value:
+ *                 nombre: "Ventas"
  *     responses:
  *       201:
  *         description: Departamento creado exitosamente

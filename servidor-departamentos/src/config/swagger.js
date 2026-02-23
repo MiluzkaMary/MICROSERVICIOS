@@ -83,14 +83,21 @@ Microservicio para la gestión de departamentos.
           properties: {
             nombre: {
               type: 'string',
-              description: 'Nombre del departamento',
-              example: 'Tecnología'
+              description: 'Nombre del departamento (único, requerido)',
+              minLength: 1,
+              maxLength: 100,
+              example: 'Recursos Humanos'
             },
             descripcion: {
               type: 'string',
-              description: 'Descripción del departamento (opcional)',
-              example: 'Departamento de desarrollo de software'
+              description: 'Descripción detallada del departamento (opcional)',
+              maxLength: 500,
+              example: 'Departamento encargado de la gestión de personal, nómina y desarrollo organizacional'
             }
+          },
+          example: {
+            nombre: 'Recursos Humanos',
+            descripcion: 'Departamento encargado de la gestión de personal, nómina y desarrollo organizacional'
           }
         },
         DepartamentoPaginado: {
