@@ -1,49 +1,93 @@
-# Microservicios 
+# Sistema de Microservicios - Gestión de Empleados y Departamentos
 
-Sistema de microservicios con arquitectura desacoplada para gestión de empleados y departamentos.
+Sistema de microservicios con arquitectura desacoplada construido con Node.js, Express, PostgreSQL y Docker.
+
+## 📋 Tabla de Contenidos
+
+- [Arquitectura](#-arquitectura)
+- [Características](#-características)
+- [Requisitos Previos](#-requisitos-previos)
+- [Instalación y Despliegue](#-instalación-y-despliegue)
+- [Documentación API](#-documentación-api-swagger)
+- [Pruebas](#-pruebas)
+- [Comunicación entre Servicios](#-comunicación-entre-servicios)
+- [Resiliencia](#-resiliencia)
+
+---
 
 ## 🏗️ Arquitectura
 
 ```
-Reto1/
-├── docker-compose.yml          # Orquestación única de todos los servicios
-├── servidor-empleados/         # Microservicio de Empleados
-│   ├── src/                    # Código fuente
-│   │   ├── utils/              # Utilidades (httpClient para comunicación)
-│   │   ├── config/             # Configuración (database)
-│   │   ├── controllers/        # Controladores
-│   │   ├── services/           # Lógica de negocio
-│   │   ├── repositories/       # Acceso a datos
-│   │   ├── models/             # Modelos de dominio
-│   │   └── validators/         # Validaciones
-│   ├── Dockerfile              # Imagen Docker
-│   ├── init.sql                # Esquema BD empleados
+Reto/
+├── docker-compose.yml              # Orquestación de todos los servicios
+├── servidor-empleados/             # Microservicio de Empleados
+│   ├── src/
+│   │   ├── config/                 # Configuración (database, swagger)
+│   │   ├── controllers/            # Controladores HTTP
+│   │   ├── services/               # Lógica de negocio
+│   │   ├── repositories/           # Acceso a datos
+│   │   ├── models/                 # Modelos de dominio
+│   │   ├── validators/             # Validaciones
+│   │   ├── routes/                 # Rutas API
+│   │   └── utils/                  # Utilidades (httpClient)
+│   ├── Dockerfile                  # Multi-stage build
+│   ├── init.sql                    # Esquema BD
 │   └── package.json
-└── servidor-departamentos/     # Microservicio de Departamentos
-    ├── src/                    # Código fuente (misma estructura)
-    ├── Dockerfile              # Imagen Docker
-    ├── init.sql                # Esquema BD departamentos
-    └── package.json
+└── servidor-departamentos/         # Microservicio de Departamentos
+    └── (misma estructura)
 ```
 
-**⚠️ IMPORTANTE**: Los archivos `docker-compose.yml` dentro de cada servicio han sido eliminados.  
-Solo existe el `docker-compose.yml` en la raíz para orquestar toda la infraestructura.
+### Servicios Desplegados
 
-## 🎯 Principios de Microservicios
+| Servicio | Puerto | Descripción | Swagger UI |
+|----------|--------|-------------|------------|
+| **Empleados API** | 8080 | CRUD de empleados | http://localhost:8080/api-docs |
+| **Departamentos API** | 8081 | CRUD de departamentos | http://localhost:8081/api-docs |
+| **DB Empleados** | 5432 | PostgreSQL 15 | - |
+| **DB Departamentos** | 5433 | PostgreSQL 15 | - |
 
-✅ **Independencia de datos**: Cada servicio tiene su propia base de datos PostgreSQL  
-✅ **Desacoplamiento**: Servicios completamente independientes  
-✅ **Escalabilidad**: Cada servicio puede escalar independientemente  
-✅ **Contenedorización**: Docker para portabilidad y aislamiento  
-✅ **Orquestación centralizada**: Un solo `docker-compose.yml` en la raíz  
+---
 
-## 🚀 Inicio Rápido
+## ✨ Características
 
-### Prerrequisitos
-- Docker Desktop instalado
-- PowerShell (Windows)
+### Principios de Microservicios
 
-### Levantar todos los servicios
+✅ **Base de datos independiente por servicio**  
+✅ **Comunicación HTTP REST entre servicios**  
+✅ **Contenedorización con Docker**  
+✅ **Health checks para monitoreo**  
+✅ **Configuración mediante variables de entorno**  
+✅ **Documentación OpenAPI/Swagger**  
+
+### Resiliencia
+
+✅ **Timeout de 3 segundos** en llamadas HTTP  
+✅ **2 reintentos automáticos** con delay de 500ms  
+✅ **Manejo robusto de errores** (404, 503, timeout)  
+✅ **Health checks** con reintentos automáticos  
+✅ **Depends_on** para orden de inicio correcto  
+
+---
+
+## 🔧 Requisitos Previos
+
+- **Docker Desktop** instalado y corriendo
+- **PowerShell** (Windows) o terminal compatible
+- **Postman** (opcional, para pruebas manuales)
+- **Git** (para clonar el repositorio)
+
+---
+
+## 🚀 Instalación y Despliegue
+
+### 1. Clonar el Repositorio
+
+```powershell
+git clone <url-del-repositorio>
+cd Reto1
+```
+
+### 2. Levantar Todos los Servicios
 
 Desde la **raíz del proyecto** (donde está `docker-compose.yml`):
 
@@ -51,192 +95,229 @@ Desde la **raíz del proyecto** (donde está `docker-compose.yml`):
 docker-compose up --build
 ```
 
-Esto levanta:
-- ✅ Servicio Empleados (puerto 8080)
-- ✅ Base de datos Empleados (puerto 5432)
-- ✅ Servicio Departamentos (puerto 8081)
-- ✅ Base de datos Departamentos (puerto 5433)
+Este comando:
+- Construye las imágenes Docker de ambos servicios
+- Levanta 4 contenedores (2 APIs + 2 bases de datos)
+- Configura la red interna para comunicación entre servicios
+- Ejecuta scripts de inicialización de bases de datos
+- Expone los puertos al host
 
-### Detener todos los servicios
+**Tiempo estimado:** 2-3 minutos la primera vez
 
-```powershell
-docker-compose down
-```
-
-### Ver logs en tiempo real
+### 3. Verificar que los Servicios Están Activos
 
 ```powershell
-docker-compose logs -f
+# Health check de empleados
+curl http://localhost:8080/health
+
+# Health check de departamentos
+curl http://localhost:8081/health
 ```
 
-## 🌐 Servicios Disponibles
+Respuesta esperada:
+```json
+{"status":"OK","service":"servidor-empleados"}
+```
 
-### 📋 Servidor Empleados
-- **Puerto**: `8080`
-- **Base URL**: `http://localhost:8080`
-- **Health Check**: `http://localhost:8080/health`
-- **BD Puerto**: `5432`
+### 4. Acceder a la Documentación Swagger
 
-**Endpoints:**
-- `POST /empleados` - Crear empleado
-- `GET /empleados/:id` - Obtener empleado por ID
-- `GET /empleados` - Listar empleados (con paginación)
+Abre en tu navegador:
 
-### 🏢 Servidor Departamentos
-- **Puerto**: `8081`
-- **Base URL**: `http://localhost:8081`
-- **Health Check**: `http://localhost:8081/health`
-- **BD Puerto**: `5433`
+- **Empleados:** http://localhost:8080/api-docs
+- **Departamentos:** http://localhost:8081/api-docs
 
-**Endpoints:**
+---
+
+## 📚 Documentación API (Swagger)
+
+Ambos servicios incluyen documentación interactiva con **Swagger UI**.
+
+### Empleados API - http://localhost:8080/api-docs
+
+**Endpoints disponibles:**
+- `POST /empleados` - Crear empleado (valida departamento)
+- `GET /empleados/{id}` - Obtener empleado por ID
+- `GET /empleados` - Listar empleados con paginación
+- `GET /health` - Health check
+
+### Departamentos API - http://localhost:8081/api-docs
+
+**Endpoints disponibles:**
 - `POST /departamentos` - Crear departamento
-- `GET /departamentos/:id` - Obtener departamento por ID
-- `GET /departamentos` - Listar departamentos (con paginación)
+- `GET /departamentos/{id}` - Obtener departamento por ID
+- `GET /departamentos` - Listar departamentos con paginación
+- `GET /health` - Health check
 
-## 📊 Bases de Datos Independientes
+---
 
-Cada microservicio tiene su propia base de datos PostgreSQL 15 Alpine:
+## 🧪 Pruebas
 
-| Servicio | Base de Datos | Puerto Externo | Contenedor |
-|----------|--------------|----------------|------------|
-| Empleados | empleados_db | 5432 | empleados-postgres |
-| Departamentos | departamentos_db | 5433 | departamentos-postgres |
+### Opción 1: Swagger UI (Recomendado)
 
-### Conectarse a las bases de datos
+1. Abre http://localhost:8080/api-docs o http://localhost:8081/api-docs
+2. Haz clic en el endpoint que deseas probar
+3. Haz clic en "Try it out"
+4. Ingresa los parámetros/body
+5. Haz clic en "Execute"
 
-**Empleados:**
-```powershell
-docker exec -it empleados-postgres psql -U postgres -d empleados_db
-```
+### Opción 2: cURL (Terminal)
 
-**Departamentos:**
-```powershell
-docker exec -it departamentos-postgres psql -U postgres -d departamentos_db
-```
-
-## 🧪 Ejemplos de Uso
-
-### Crear un departamento
+**Crear departamento:**
 ```powershell
 curl -X POST http://localhost:8081/departamentos `
   -H "Content-Type: application/json" `
   -d '{\"nombre\": \"Tecnología\", \"descripcion\": \"Desarrollo de software\"}'
 ```
 
-### Crear un empleado
+**Listar departamentos:**
+```powershell
+curl http://localhost:8081/departamentos
+```
+
+**Crear empleado:**
 ```powershell
 curl -X POST http://localhost:8080/empleados `
   -H "Content-Type: application/json" `
-  -d '{\"id\": \"E001\", \"nombre\": \"Juan Pérez\", \"email\": \"juan@example.com\", \"departamentoId\": \"1\", \"fechaIngreso\": \"2024-01-15\"}'
+  -d '{\"id\": \"EMP001\", \"nombre\": \"Juan Pérez\", \"email\": \"juan@empresa.com\", \"departamentoId\": \"1\", \"fechaIngreso\": \"2024-01-15\"}'
 ```
 
-### Listar departamentos con paginación
+**Listar empleados paginados:**
 ```powershell
-curl "http://localhost:8081/departamentos?page=1&size=10"
+curl "http://localhost:8080/empleados?page=1&size=10"
 ```
 
-### Listar empleados con filtros
-```powershell
-curl "http://localhost:8080/empleados?page=1&size=5&q=juan"
+### Opción 3: Postman
+
+1. Importa la colección desde http://localhost:8080/api-docs.json
+2. Configura el entorno con `baseUrl = http://localhost:8080`
+3. Ejecuta las peticiones
+
+---
+
+## 🔗 Comunicación entre Servicios
+
+### Escenario: Crear Empleado
+
+**Flujo completo:**
+
+```
+Cliente → POST /empleados → Servicio Empleados
+                              ↓
+                    Validar departamento
+                              ↓
+           GET http://departamentos-service:8081/departamentos/{id}
+                              ↓
+                    Servicio Departamentos
+                              ↓
+                 200 OK (existe) o 404 (no existe)
+                              ↓
+           Si existe: Guardar empleado → 201 Created
+           Si no existe: → 400 Bad Request
+           Si timeout: → 503 Service Unavailable
 ```
 
-## 🔧 Comandos Útiles
+### Hostnames
 
-### Reconstruir servicios después de cambios en el código
+**Comunicación INTERNA (entre contenedores):**
+- Servicio de empleados llama a: `http://departamentos-service:8081`
+- Configurado en variables de entorno del docker-compose
+
+**Comunicación EXTERNA (tu PC → contenedores):**
+- Usa `http://localhost:8080` y `http://localhost:8081`
+- Los puertos están mapeados al host
+
+---
+
+## 🛡️ Resiliencia
+
+### Timeout y Reintentos
+
+El servicio de empleados implementa:
+
+```javascript
+{
+  timeout: 3000,        // 3 segundos máximo por petición
+  retries: 2,           // 2 reintentos automáticos
+  retryDelay: 500       // 500ms entre reintentos
+}
+```
+
+### Manejo de Errores
+
+| Escenario | HTTP Code | Respuesta |
+|-----------|-----------|-----------|
+| Departamento existe | 200/201 | Empleado creado (201) |
+| Departamento no existe | 404 | 400 - "departamento no existe" |
+| Servicio caído/timeout | Timeout | 503 - "servicio no disponible" |
+| Error de validación | 400 | 400 - errores específicos |
+| Duplicado | 409 | 409 - "registro duplicado" |
+
+---
+
+## 🛠️ Comandos Útiles
+
+### Detener Servicios
+
 ```powershell
 docker-compose down
-docker-compose up --build
 ```
 
-### Reconstruir solo un servicio específico
+### Reconstruir tras Cambios en el Código
+
 ```powershell
-docker-compose up --build empleados-service
-docker-compose up --build departamentos-service
+docker-compose down; docker-compose up --build
 ```
 
-### Ver estado de contenedores
+### Ver Logs en Tiempo Real
+
+```powershell
+# Todos los servicios
+docker-compose logs -f
+
+# Solo empleados
+docker-compose logs -f empleados-service
+
+# Solo departamentos
+docker-compose logs -f departamentos-service
+```
+
+### Acceder a las Bases de Datos
+
+```powershell
+# Base de datos de empleados
+docker exec -it empleados-postgres psql -U postgres -d empleados_db
+
+# Base de datos de departamentos
+docker exec -it departamentos-postgres psql -U postgres -d departamentos_db
+```
+
+### Ver Estado de Contenedores
+
 ```powershell
 docker-compose ps
 ```
 
-### Eliminar volúmenes (datos de BD)
-```powershell
-docker-compose down -v
-```
-
-## 📝 Códigos de Estado HTTP
-
-Todos los servicios usan **201 Created** para operaciones exitosas (convención del proyecto):
-
-- **201**: Operación exitosa (GET, POST)
-- **400**: Bad Request (datos inválidos)
-- **404**: Not Found (recurso no existe)
-- **409**: Conflict (duplicado)
-- **500**: Internal Server Error
+---
 
 ## 📂 Documentación Individual
 
-- [Servidor Empleados](./servidor-empleados/README.md)
-- [Servidor Departamentos](./servidor-departamentos/README.md)
+Para información específica de cada servicio, consulta:
 
-## 🐳 Buenas Prácticas Implementadas
+- [servidor-empleados/README.md](servidor-empleados/README.md)
+- [servidor-departamentos/README.md](servidor-departamentos/README.md)
 
-1. **Un solo docker-compose.yml** en la raíz para orquestar todo
-2. **Multi-stage builds** en Dockerfiles para imágenes optimizadas
-3. **Health checks** para garantizar disponibilidad
-4. **Usuarios no privilegiados** en contenedores (seguridad)
-5. **Volúmenes nombrados** para persistencia de datos
-6. **Red compartida** para comunicación entre contenedores
-7. **Variables de entorno** para configuración
-8. **Arquitectura en capas** (Controller → Service → Repository)
-9. **Validación de datos** centralizada
-10. **Manejo de errores** consistente
+---
 
-## 🎓 Materia: Microservicios
+## 🎯 Buenas Prácticas Implementadas
 
-Este proyecto implementa conceptos clave de arquitectura de microservicios:
-- ✅ Desacoplamiento por servicio y base de datos
-- ✅ Independencia de despliegue
-- ✅ Escalabilidad horizontal
-- ✅ Resiliencia y tolerancia a fallos
-- ✅ API REST para comunicación
-- ✅ Comunicación HTTP entre servicios con reintentos y timeouts
-- ✅ Manejo de errores consistente y circuit breaker básico
-
-## 🔄 Comunicación Entre Servicios
-
-### Flujo de Creación de Empleado
-
-```
-Cliente → POST /empleados (empleados-service)
-   ↓
-empleados-service → GET /departamentos/{id} (departamentos-service)
-   ↓
-departamentos-service responde:
-   ├─ 201/200 → ✅ empleados-service guarda en DB → 201 Created
-   ├─ 404     → ❌ empleados-service → 400 Bad Request
-   └─ timeout → ❌ empleados-service → 503 Service Unavailable
-```
-
-### Características de Comunicación HTTP
-
-**Configuración de reintentos:**
-- ⏱️ **Timeout**: 3 segundos por petición
-- 🔁 **Reintentos**: 2 reintentos automáticos
-- ⏳ **Delay entre reintentos**: 500ms
-- 🛡️ **Circuit breaker básico**: Falla rápido si el servicio está caído
-
-**Códigos de respuesta:**
-- `201 Created` - Empleado creado exitosamente (departamento validado)
-- `400 Bad Request` - Departamento no existe
-- `503 Service Unavailable` - Servicio de departamentos no disponible
-- `502 Bad Gateway` - Error en validación de departamento
-- `500 Internal Server Error` - Error interno
-
-### Variables de Entorno
-
-El servicio de empleados usa estas variables para comunicarse:
-```bash
-DEPARTAMENTOS_SERVICE_HOST=departamentos-service
-DEPARTAMENTOS_SERVICE_PORT=8081
-```
+✅ **Arquitectura en capas** (Controller → Service → Repository → Model)  
+✅ **Inyección de dependencias** mediante módulos  
+✅ **Validación en múltiples capas**  
+✅ **Manejo centralizado de errores**  
+✅ **Logging para debugging**  
+✅ **Documentación OpenAPI completa**  
+✅ **Health checks para monitoreo**  
+✅ **Dockerfiles multi-stage** para imágenes optimizadas  
+✅ **Usuario no privilegiado** en contenedores Docker  
+✅ **Variables de entorno** para configuración  
+✅ **Volúmenes** para persistencia de datos  
