@@ -149,4 +149,78 @@ router.get('/:id', (req, res) => empleadoController.obtenerPorId(req, res));
  */
 router.get('/', (req, res) => empleadoController.obtenerTodos(req, res));
 
+/**
+ * @swagger
+ * /empleados/{id}:
+ *   put:
+ *     tags:
+ *       - Empleados
+ *     summary: Actualizar un empleado
+ *     description: Actualiza los datos de un empleado existente
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID único del empleado
+ *         example: EMP001
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             $ref: '#/components/schemas/Empleado'
+ *     responses:
+ *       200:
+ *         description: Empleado actualizado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/Empleado'
+ *       400:
+ *         $ref: '#/components/responses/BadRequest'
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.put('/:id', (req, res) => empleadoController.actualizar(req, res));
+
+/**
+ * @swagger
+ * /empleados/{id}:
+ *   delete:
+ *     tags:
+ *       - Empleados
+ *     summary: Eliminar un empleado (desvinculación)
+ *     description: |
+ *       Elimina un empleado del sistema y publica un evento `empleado.eliminado` 
+ *       en RabbitMQ para notificar a otros servicios.
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID único del empleado
+ *         example: EMP001
+ *     responses:
+ *       200:
+ *         description: Empleado eliminado exitosamente
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Empleado EMP001 eliminado exitosamente
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.delete('/:id', (req, res) => empleadoController.eliminar(req, res));
+
 module.exports = router;
