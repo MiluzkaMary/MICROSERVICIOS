@@ -105,7 +105,7 @@ curl http://localhost:8081/health
 ```powershell
 curl -X POST http://localhost:8080/empleados -H "Content-Type: application/json" -d '{\"id\":\"E001\",\"nombre\":\"Juan\",\"email\":\"juan1@test.com\",\"departamentoId\":\"1\",\"fechaIngreso\":\"2024-01-15\"}'
 ```
-⏱️ **Observa:** Tarda ~6 segundos (timeout + reintentos)
+⏱️ **Observa:** Tarda ~3 segundos (timeout)
 ❌ **Responde:** `503 Service Unavailable`
 
 ### 5.2 Repetir 4 veces más (cambia el email cada vez)
@@ -119,7 +119,7 @@ curl -X POST http://localhost:8080/empleados -H "Content-Type: application/json"
 curl -X POST http://localhost:8080/empleados -H "Content-Type: application/json" -d '{\"id\":\"E005\",\"nombre\":\"Pedro\",\"email\":\"pedro5@test.com\",\"departamentoId\":\"1\",\"fechaIngreso\":\"2024-01-15\"}'
 ```
 
-Cada una tarda ~6 segundos
+Cada una tarda ~3 segundos
 
 ### 5.3 Ver estado del Circuit Breaker
 ```powershell
@@ -149,7 +149,7 @@ curl -X POST http://localhost:8080/empleados -H "Content-Type: application/json"
 ```
 
 ⚡ **¡OBSERVA LA DIFERENCIA!**
-- ⏱️ Responde en **milisegundos** (antes tardaba 6 segundos)
+- ⏱️ Responde en **milisegundos** (antes tardaba 3 segundos)
 - ❌ Responde: `503` con mensaje "Circuit Breaker activado"
 - 🛑 **NO intentó llamar** al servicio caído
 
@@ -248,7 +248,7 @@ Paso 1-3: 🟢 CLOSED (cerrado - normal)
           └─ Stats: 1 success
 
 Paso 4-5: 💥 Servicio caído
-          └─ 5 llamadas fallan (tardan 6s cada una)
+          └─ 5 llamadas fallan (tardan 3s cada una)
           
 Paso 5.3: 🔴 OPEN (abierto - protección)
           └─ Demasiados fallos detectados (5 de 5)
@@ -278,17 +278,17 @@ Paso 7:   🔄 Servicio se recupera
 ### Sin Circuit Breaker (antes):
 ```
 Servicio caído → 10 usuarios intentan crear empleado
-cada uno espera: 6 segundos (timeout + reintentos)
-Total: 10 × 6s = 60 segundos de tiempo perdido
+cada uno espera: 3 segundos (timeout)
+Total: 10 × 3s = 30 segundos de tiempo perdido
 Servidor empleados: 10 conexiones bloqueadas
 ```
 
 ### Con Circuit Breaker (ahora):
 ```
 Servicio caído → 10 usuarios intentan crear empleado
-Primeros 5: esperan 6s cada uno (hasta que se abre el circuito)
+Primeros 5: esperan 3s cada uno (hasta que se abre el circuito)
 Siguientes 5: respuesta instantánea (<1ms)
-Total: 5 × 6s + 5 × 0.001s = 30 segundos ahorrados
+Total: 5 × 3s + 5 × 0.001s = 15 segundos ahorrados
 Servidor empleados: NO se bloquea
 ```
 

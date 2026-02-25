@@ -31,13 +31,13 @@ COPY src/ ./src/
 # Aquí se pueden agregar pasos de build/test en el futuro
 # Por ejemplo: RUN npm run build, RUN npm test, etc.
 
-# ============================================
-# ETAPA 3: Producción (Imagen Final)
-# Imagen optimizada solo con lo necesario
-# ============================================
 FROM node:20-alpine AS production
 
 # Crear usuario no privilegiado para seguridad
+# Crea un nuevo grupo de sistema (S) llamado "nodejs" con ID de grupo (GID) 1001.
+# Este grupo se utiliza para ejecutar procesos del contenedor con permisos limitados
+# en lugar de usar el usuario root, mejorando la seguridad del contenedor.
+# El parámetro -g especifica el GID y -S indica que es un grupo de sistema.
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nodejs -u 1001
 

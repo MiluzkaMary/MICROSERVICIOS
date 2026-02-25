@@ -36,13 +36,15 @@ El **Circuit Breaker** es un patrón de diseño que previene fallos en cascada e
 
 ```javascript
 {
-  timeout: 3000,                    // Timeout de 3 segundos por llamada
+  timeout: 10000,                   // Timeout de 10 segundos (permite que httpGet complete)
   errorThresholdPercentage: 50,     // Abre el circuito si >50% de llamadas fallan
   resetTimeout: 10000,              // Intenta cerrar el circuito cada 10 segundos
   volumeThreshold: 5,               // Mínimo 5 llamadas antes de evaluar
   rollingCountTimeout: 10000        // Ventana de evaluación: 10 segundos
 }
 ```
+
+**Importante:** httpGet NO hace reintentos cuando se usa con Circuit Breaker. El Circuit Breaker maneja la lógica de fallos.
 
 ---
 
@@ -53,7 +55,7 @@ El **Circuit Breaker** es un patrón de diseño que previene fallos en cascada e
 Sin Circuit Breaker:
   Servicio Departamentos CAÍDO 
     ↓
-  Empleados espera 3s × intento × 3 reintentos = 9s por request
+  Empleados espera 3s por request (timeout sin reintentos)
     ↓
   Todas las peticiones a Empleados se enlentecen
     ↓
@@ -74,7 +76,7 @@ Con Circuit Breaker:
 - Permite que el servicio se recupere sin presión adicional
 
 ### 3. **Respuestas Rápidas al Usuario**
-- Sin Circuit Breaker: esperar timeout → reintentos → error (9+ segundos)
+- Sin Circuit Breaker: esperar timeout (3 segundos)
 - Con Circuit Breaker: respuesta inmediata cuando está OPEN (<1ms)
 
 ### 4. **Recuperación Automática**
@@ -198,7 +200,7 @@ curl http://localhost:8080/circuit-breaker/status
    - **Rejects**: > 0 (llamadas posteriores rechazadas)
 
 4. **Observar**:
-   - Primeras 5 llamadas tardan ~3 segundos cada una (timeout + reintentos)
+   - Primeras 5 llamadas tardan ~3 segundos cada una (timeout)
    - Siguientes llamadas son **instantáneas** (circuito abierto, respuesta inmediata)
 
 5. Esperar 10 segundos y volver a llamar:
@@ -253,9 +255,9 @@ Los siguientes eventos se registran automáticamente:
 
 **Sin Circuit Breaker:**
 ```
-Usuario → Empleados → [espera 3s timeout] → [reintento 1: 3s] → [reintento 2: 3s] 
-         = 9 segundos para recibir un error
-         × 100 usuarios = 100 conexiones bloqueadas × 9s
+Usuario → Empleados → [espera 3s timeout]
+         = 3 segundos para recibir un error
+         × 100 usuarios = 100 conexiones bloqueadas × 3s
          → Colapso del servicio 💥
 ```
 

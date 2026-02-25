@@ -36,10 +36,11 @@ class EmpleadoService {
       let departamentoResponse;
       try {
         // Hacer petición con Circuit Breaker para resiliencia
+        // Circuit Breaker maneja los fallos, no necesitamos reintentos en httpGet
         departamentoResponse = await httpGetWithCircuitBreaker(departamentoUrl, {
           timeout: 3000,
-          retries: 2,
-          retryDelay: 500
+          retries: 0,  // Sin reintentos - el Circuit Breaker maneja la lógica de fallos
+          retryDelay: 0
         });
       } catch (error) {
         // Error de red, timeout o servicio caído
