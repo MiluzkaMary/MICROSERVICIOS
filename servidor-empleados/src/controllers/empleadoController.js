@@ -64,6 +64,49 @@ class EmpleadoController {
   }
 
   /**
+   * PUT /empleados/:id
+   */
+  async actualizar(req, res) {
+    const id = String(req.params.id);
+    const resultado = await empleadoService.actualizarEmpleado(id, req.body || {});
+
+    if (!resultado.success) {
+      return res.status(resultado.statusCode).json({
+        error: this._getErrorName(resultado.statusCode),
+        message: resultado.message,
+        status: resultado.statusCode,
+        path: req.originalUrl,
+        timestamp: new Date().toISOString(),
+        errors: resultado.errors
+      });
+    }
+
+    return res.status(resultado.statusCode).json(resultado.data);
+  }
+
+  /**
+   * DELETE /empleados/:id
+   */
+  async eliminar(req, res) {
+    const id = String(req.params.id);
+    const resultado = await empleadoService.eliminarEmpleado(id);
+
+    if (!resultado.success) {
+      return res.status(resultado.statusCode).json({
+        error: this._getErrorName(resultado.statusCode),
+        message: resultado.message,
+        status: resultado.statusCode,
+        path: req.originalUrl,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    return res.status(resultado.statusCode).json({
+      message: resultado.message
+    });
+  }
+
+  /**
    * Helper para obtener nombre de error según código HTTP
    * @private
    */
@@ -72,7 +115,8 @@ class EmpleadoController {
       400: 'Bad Request',
       404: 'Not Found',
       409: 'Conflict',
-      500: 'Internal Server Error'
+      500: 'Internal Server Error',
+      503: 'Service Unavailable'
     };
     return errorNames[statusCode] || 'Error';
   }

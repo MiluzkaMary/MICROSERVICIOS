@@ -2,6 +2,7 @@ const empleadoRepository = require('../repositories/empleadoRepository');
 const { validarEmpleado } = require('../validators/empleadoValidator');
 const Empleado = require('../models/empleado');
 const { httpGetWithCircuitBreaker } = require('../utils/circuitBreakerClient');
+const { publicarEvento } = require('../config/rabbitmq');
 
 class EmpleadoService {
   /**
@@ -107,6 +108,16 @@ class EmpleadoService {
 
       // Crear empleado
       const empleadoCreado = await empleadoRepository.crear(empleado);
+
+      // Publicar evento empleado.creado en RabbitMQ
+      await publicarEvento('empleado.creado', {
+        empleadoId: empleadoCreado.id,
+        nombre: empleadoCreado.nombre,
+        email: empleadoCreado.email,
+        departamentoId: empleadoCreado.departamentoId,
+        fechaIngreso: empleadoCreado.fechaIngreso,
+        timestamp: new Date().toISOString()
+      });
 
       return {
         success: true,
@@ -230,6 +241,115 @@ class EmpleadoService {
         success: false,
         statusCode: 500,
         message: 'Error interno al obtener los empleados'
+      };
+    }
+  }
+
+  /**
+   * Actualiza un empleado existente
+   * @param {string} id - ID del empleado
+   * @param {Object} datos - Datos a actualizar
+   * @returns {Promise<Object>} Resultado de la operación
+   */
+  async actualizarEmpleado(id, datos) {
+    try {
+      // Verificar que el empleado existe
+      const empleadoExistente = await empleadoRepository.buscarPorId(id);
+      if (!empleadoExistente) {
+        return {
+          success: false,
+          statusCode: 404,
+          message: `El empleado con id ${id} no existe`
+        };
+      }
+
+      // Crear modelo con los nuevos datos
+      const empleado = new Empleado({ ...datos, id });
+
+      // Validar datos
+      const errores = validarEmpleado(empleado);
+      if (errores.length > 0) {
+        return {
+          success: false,
+          statusCode: 400,
+          message: "Datos inválidos",
+          errors: errores
+        };
+      }
+
+      // Actualizar empleado
+      const empleadoActualizado = await empleadoRepository.actualizar(id, empleado);
+
+      if (!empleadoActualizado) {
+        return {
+          success: false,
+          statusCode: 404,
+          message: `El empleado con id ${id} no existe`
+        };
+      }
+
+      return {
+        success: true,
+        statusCode: 200,
+        data: empleadoActualizado.toJSON()
+      };
+    } catch (error) {
+      console.error('Error al actualizar empleado:', error);
+      return {
+        success: false,
+        statusCode: 500,
+        message: 'Error interno al actualizar el empleado'
+      };
+    }
+  }
+
+  /**
+   * Elimina un empleado (desvinculación)
+   * @param {string} id - ID del empleado
+   * @returns {Promise<Object>} Resultado de la operación
+   */
+  async eliminarEmpleado(id) {
+    try {
+      // Verificar que el empleado existe antes de eliminar
+      const empleadoExistente = await empleadoRepository.buscarPorId(id);
+      if (!empleadoExistente) {
+        return {
+          success: false,
+          statusCode: 404,
+          message: `El empleado con id ${id} no existe`
+        };
+      }
+
+      // Eliminar empleado
+      const eliminado = await empleadoRepository.eliminar(id);
+
+      if (!eliminado) {
+        return {
+          success: false,
+          statusCode: 404,
+          message: `El empleado con id ${id} no existe`
+        };
+      }
+
+      // Publicar evento empleado.eliminado en RabbitMQ
+      await publicarEvento('empleado.eliminado', {
+        empleadoId: empleadoExistente.id,
+        nombre: empleadoExistente.nombre,
+        email: empleadoExistente.email,
+        timestamp: new Date().toISOString()
+      });
+
+      return {
+        success: true,
+        statusCode: 200,
+        message: `Empleado ${id} eliminado exitosamente`
+      };
+    } catch (error) {
+      console.error('Error al eliminar empleado:', error);
+      return {
+        success: false,
+        statusCode: 500,
+        message: 'Error interno al eliminar el empleado'
       };
     }
   }

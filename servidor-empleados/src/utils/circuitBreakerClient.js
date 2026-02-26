@@ -15,15 +15,17 @@ const circuitBreakerOptions = {
   rollingCountTimeout: 60000, // Ventana de tiempo para calcular estadísticas (10 segundos)
   rollingCountBuckets: 10, // Número de buckets para la ventana deslizante
   name: 'departamentos-service-breaker', // Nombre del circuito
-  volumeThreshold: 5, // Mínimo de llamadas antes de evaluar si abrir el circuito
+  volumeThreshold: 3, // Mínimo de llamadas antes de evaluar si abrir el circuito
   enabled: true, // Circuit breaker habilitado
 };
 
 /**
  * Función de fallback cuando el circuito está abierto
+ * IMPORTANTE: Solo se ejecuta automáticamente cuando el circuito está ABIERTO
  */
-const fallbackFunction = (url) => {
+const fallbackFunction = (url, options, error) => {
   console.warn(`⚠️ CIRCUIT BREAKER ABIERTO - Fallback activado para: ${url}`);
+  console.warn(`Razón: ${error ? error.message : 'Circuito abierto'}`);
   return {
     statusCode: 503,
     data: null,
@@ -92,16 +94,12 @@ circuitBreaker.on('reject', () => {
  * @returns {Promise<Object>} Respuesta con { statusCode, data, ok }
  */
 async function httpGetWithCircuitBreaker(url, options = {}) {
-  try {
-    return await circuitBreaker.fire(url, options);
-  } catch (error) {
-    // Si el circuito está abierto, el error viene del fallback
-    if (circuitBreaker.opened) {
-      return fallbackFunction(url);
-    }
-    // Si es otro tipo de error, lo propagamos
-    throw error;
-  }
+  // El Circuit Breaker maneja automáticamente:
+  // - Ejecución de la función (httpGet)
+  // - Conteo de éxitos/fallos
+  // - Apertura del circuito cuando errorThreshold se alcanza
+  // - Ejecución del fallback cuando el circuito está abierto
+  return await circuitBreaker.fire(url, options);
 }
 
 /**
