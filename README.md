@@ -96,10 +96,11 @@ Sistema distribuido de microservicios para gestión de recursos humanos, impleme
 - Gestión de perfiles de empleados (teléfono, dirección, ciudad, biografía)
 - **Consumer de eventos RabbitMQ**:
   - Escucha `empleado.creado` → Crea perfil default automáticamente
+  - Escucha `empleado.eliminado` → Elimina perfil del empleado
 - Consulta y actualización de perfiles
 
 **Base de datos:** PostgreSQL (puerto 5434)  
-**Cola RabbitMQ:** `perfiles.empleado_creado`
+**Colas RabbitMQ:** `perfiles.empleado_creado`, `perfiles.empleado_eliminado`
 
 ### 4. Servicio de Notificaciones (Puerto 8083)
 **Responsabilidades:**
@@ -124,25 +125,8 @@ Sistema distribuido de microservicios para gestión de recursos humanos, impleme
 
 ### 6. Mailhog - SMTP de Prueba (Puerto 8025)
 **Propósito:** Servidor SMTP de desarrollo para capturar y visualizar emails sin enviarlos realmente.
-**Responsabilidades:**
-- Gestión de perfiles de empleados (teléfono, dirección, ciudad, biografía)
-- Creación automática de perfil al recibir evento `empleado.creado`
-- Consulta y actualización de perfiles
 
-**Base de datos:** PostgreSQL (puerto 5434)
-
-### 4. Servicio de Notificaciones (Puerto 8083)
-**Responsabilidades:**
-- Envío de notificaciones por email (Bienvenida, Desvinculación)
-- Historial de notificaciones con estados (PENDIENTE, ENVIADA, FALLIDA)
-- Procesamiento de eventos de empleados
-- Estadísticas de notificaciones
-
-**Base de datos:** PostgreSQL (puerto 5435)  
-**SMTP:** Mailhog (puerto 1025)
-
-### 5. Mailhog - SMTP de Prueba (Puerto 8025)
-**Propósito:** Servidor SMTP de desarrollo para capturar y visualizar emails sin enviarlos realmente.
+**Web UI:** http://localhost:8025
 
 ---
 

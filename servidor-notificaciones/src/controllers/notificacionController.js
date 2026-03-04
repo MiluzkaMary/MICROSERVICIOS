@@ -7,11 +7,13 @@ const NotificacionValidator = require('../validators/notificacionValidator');
 class NotificacionController {
   /**
    * GET /notificaciones
-   * Lista todas las notificaciones registradas
+   * Lista todas las notificaciones registradas con paginación
+   * Query params: page, size, sortBy, order, q, tipo, estado, empleadoId, destinatario
    */
   async listarNotificaciones(req, res) {
     try {
-      const resultado = await notificacionService.obtenerTodas();
+      // Usar paginación por defecto
+      const resultado = await notificacionService.obtenerNotificacionesConPaginacion(req.query);
       return res.status(resultado.statusCode).json(resultado);
     } catch (error) {
       console.error('Error en listarNotificaciones:', error);

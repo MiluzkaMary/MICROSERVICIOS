@@ -9,16 +9,30 @@ docker-compose up --build
 ```
 
 Esto levanta:
-- Servicio Empleados (puerto 8080)
-- PostgreSQL Empleados (puerto 5432)
-- Servicio Departamentos (puerto 8081)
-- PostgreSQL Departamentos (puerto 5433)
+- ✅ Servicio Empleados (puerto 8080)
+- ✅ PostgreSQL Empleados (puerto 5432)
+- ✅ Servicio Departamentos (puerto 8081)
+- ✅ PostgreSQL Departamentos (puerto 5433)
+- ✅ Servicio Perfiles (puerto 8082)
+- ✅ PostgreSQL Perfiles (puerto 5434)
+- ✅ Servicio Notificaciones (puerto 8083)
+- ✅ PostgreSQL Notificaciones (puerto 5435)
+- ✅ RabbitMQ (puerto 5672 + Management UI 15672)
+- ✅ Mailhog (puerto 1025 SMTP + UI 8025)
 
 ## 🛑 Detener todos los servicios
 
 ```powershell
 docker-compose down
 ```
+
+## 🗑️ Detener y eliminar volúmenes (base de datos)
+
+```powershell
+docker-compose down -v
+```
+
+⚠️ **ADVERTENCIA**: Esto eliminará todos los datos de las bases de datos
 
 ## 🔄 Actualizar servicios con cambios en el código
 
@@ -46,14 +60,22 @@ docker-compose up
 docker-compose logs -f
 ```
 
-**Solo empleados:**
+**Por servicio individual:**
 ```powershell
+# Empleados
 docker-compose logs -f empleados-service
-```
 
-**Solo departamentos:**
-```powershell
+# Departamentos
 docker-compose logs -f departamentos-service
+
+# Perfiles
+docker-compose logs -f perfiles-service
+
+# Notificaciones
+docker-compose logs -f notificaciones-service
+
+# RabbitMQ
+docker-compose logs -f rabbitmq
 ```
 
 ## 🏥 Health Checks
@@ -68,6 +90,21 @@ curl http://localhost:8080/health
 curl http://localhost:8081/health
 ```
 
+**Perfiles:**
+```powershell
+curl http://localhost:8082/health
+```
+
+**Notificaciones:**
+```powershell
+curl http://localhost:8083/health
+```
+
+**Circuit Breaker Status (Empleados):**
+```powershell
+curl http://localhost:8080/circuit-breaker/status
+```
+
 ## 💾 Acceder a las bases de datos
 
 **Empleados:**
@@ -78,6 +115,16 @@ docker exec -it empleados-postgres psql -U postgres -d empleados_db
 **Departamentos:**
 ```powershell
 docker exec -it departamentos-postgres psql -U postgres -d departamentos_db
+```
+
+**Perfiles:**
+```powershell
+docker exec -it perfiles-postgres psql -U postgres -d perfiles_db
+```
+
+**Notificaciones:**
+```powershell
+docker exec -it notificaciones-postgres psql -U postgres -d notificaciones_db
 ```
 
 ## 📋 Ejemplos de Peticiones HTTP
@@ -226,14 +273,42 @@ docker exec -it departamentos-app sh
 docker network inspect reto1_microservicios-network
 ```
 
+## 🌐 Interfaz Web de Servicios
+
+**RabbitMQ Management:**
+```
+http://localhost:15672
+Usuario: guest
+Password: guest
+```
+
+**Mailhog (Ver emails enviados):**
+```
+http://localhost:8025
+```
+
+**Swagger UI:**
+- Empleados: http://localhost:8080/api-docs
+- Departamentos: http://localhost:8081/api-docs
+- Perfiles: http://localhost:8082/api-docs
+- Notificaciones: http://localhost:8083/api-docs
+
 ## 📝 Notas Importantes
 
 1. **Puerto 8080**: Servicio de Empleados
 2. **Puerto 8081**: Servicio de Departamentos
-3. **Puerto 5432**: PostgreSQL Empleados (externo)
-4. **Puerto 5433**: PostgreSQL Departamentos (externo)
-5. **Códigos HTTP**: Se usa **201** para respuestas exitosas (convención del proyecto)
-6. **Docker Compose**: Solo usar el archivo en la raíz, no los individuales de cada servicio
+3. **Puerto 8082**: Servicio de Perfiles
+4. **Puerto 8083**: Servicio de Notificaciones
+5. **Puerto 5432**: PostgreSQL Empleados
+6. **Puerto 5433**: PostgreSQL Departamentos
+7. **Puerto 5434**: PostgreSQL Perfiles
+8. **Puerto 5435**: PostgreSQL Notificaciones
+9. **Puerto 5672**: RabbitMQ (AMQP)
+10. **Puerto 15672**: RabbitMQ Management UI
+11. **Puerto 1025**: Mailhog SMTP
+12. **Puerto 8025**: Mailhog Web UI
+13. **Códigos HTTP**: Se usa **201** para respuestas exitosas (convención del proyecto)
+14. **Docker Compose**: Solo usar el archivo en la raíz, no los individuales de cada servicio
 
 ## 🧪 Pruebas de Comunicación Entre Servicios
 
@@ -301,4 +376,87 @@ docker logs empleados-app -f
 # "Departamento 1 validado correctamente"
 # O en caso de error:
 # "Reintento 1/2 para http://departamentos-service:8081/departamentos/1"
+```
+
+---
+
+
+## 📨 RabbitMQ - Monitoreo y Gestión
+
+### Acceder a Management UI
+
+```
+URL: http://localhost:15672
+Usuario: guest
+Password: guest
+```
+
+### Ver estado de colas
+
+En el Management UI puedes ver:
+- **Colas activas**: perfiles.empleado_creado, perfiles.empleado_eliminado, notificaciones.empleado_creado, notificaciones.empleado_eliminado
+- **Mensajes en cola**: Pendientes de procesar
+- **Consumers**: Servicios conectados escuchando eventos
+- **Message rates**: Velocidad de publicación/consumo
+
+### Ver logs de RabbitMQ
+
+```powershell
+docker logs rabbitmq -f
+```
+
+---
+
+## 📧 Mailhog - Visualizar Emails
+
+### Acceder a Mailhog UI
+
+```
+URL: http://localhost:8025
+```
+
+Aquí verás:
+- ✉️ Emails de bienvenida (cuando se crea un empleado)
+- ✉️ Emails de desvinculación (cuando se elimina un empleado)
+- 📋 Detalles completos de cada email (destinatario, asunto, cuerpo)
+
+### Ver logs de Mailhog
+
+```powershell
+docker logs mailhog -f
+```
+
+---
+
+## 🔄 Flujo Completo de Prueba
+
+### Crear empleado y verificar eventos
+
+```powershell
+# 1. Crear empleado
+curl -X POST http://localhost:8080/empleados `
+  -H "Content-Type: application/json" `
+  -d '{\"id\": \"E999\", \"nombre\": \"Juan Pérez\", \"email\": \"juan.perez@empresa.com\", \"departamentoId\": \"1\", \"fechaIngreso\": \"2024-01-15\"}'
+
+# 2. Verificar que se creó el perfil automáticamente
+curl http://localhost:8082/perfiles/E999
+
+# 3. Verificar que se envió la notificación
+curl http://localhost:8083/notificaciones/E999
+
+# 4. Ver el email en Mailhog
+# Abre http://localhost:8025 en el navegador
+
+# 5. Eliminar empleado
+curl -X DELETE http://localhost:8080/empleados/E999
+
+# 6. Verificar que se eliminó el perfil
+curl http://localhost:8082/perfiles/E999
+# Debe retornar 404
+
+# 7. Verificar que se envió notificación de desvinculación
+curl http://localhost:8083/notificaciones/E999
+
+# 8. Ver el email de desvinculación en Mailhog
+# Abre http://localhost:8025 en el navegador
 ```

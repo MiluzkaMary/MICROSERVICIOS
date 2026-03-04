@@ -21,14 +21,15 @@ const ROUTING_KEY_CREADO = 'empleado.creado';
 const ROUTING_KEY_ELIMINADO = 'empleado.eliminado';
 
 /**
- * Conecta a RabbitMQ y configura los consumidores
+ * Conecta a RabbitMQ y configura los consumidores con reintentos
  */
-async function connect() {
-  try {
-    const url = `amqp://${RABBITMQ_CONFIG.user}:${RABBITMQ_CONFIG.password}@${RABBITMQ_CONFIG.host}:${RABBITMQ_CONFIG.port}`;
-    
-    connection = await amqp.connect(url);
-    channel = await connection.createChannel();
+async function connect(retries = 5, delay = 3000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const url = `amqp://${RABBITMQ_CONFIG.user}:${RABBITMQ_CONFIG.password}@${RABBITMQ_CONFIG.host}:${RABBITMQ_CONFIG.port}`;
+      
+      connection = await amqp.connect(url);
+      channel = await connection.createChannel();
 
     // Declarar exchange (debe existir, lo crea el servicio de empleados)
     await channel.assertExchange(EXCHANGE_NAME, 'topic', {
@@ -101,9 +102,16 @@ async function connect() {
     });
 
     return channel;
-  } catch (error) {
-    console.error('❌ Error al conectar a RabbitMQ:', error.message);
-    throw error;
+    } catch (error) {
+      console.warn(`⚠️ Intento ${i + 1}/${retries} - Error al conectar a RabbitMQ: ${error.message}`);
+      if (i < retries - 1) {
+        console.log(`⏳ Esperando ${delay}ms antes de reintentar...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        console.error('❌ No se pudo conectar a RabbitMQ después de varios intentos');
+        throw error;
+      }
+    }
   }
 }
 

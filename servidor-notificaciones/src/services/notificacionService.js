@@ -21,6 +21,58 @@ class NotificacionService {
   }
 
   /**
+   * Obtiene notificaciones con paginación y filtrado
+   */
+  async obtenerNotificacionesConPaginacion(filtros) {
+    try {
+      // Validar y parsear parámetros con valores seguros
+      const page = Math.max(parseInt(filtros.page || "1", 10), 1);
+      const size = Math.min(Math.max(parseInt(filtros.size || "10", 10), 1), 100);
+
+      // Preparar filtros sanitizados
+      const q = (filtros.q || "").trim().toLowerCase();
+      const tipo = (filtros.tipo || "").trim();
+      const estado = (filtros.estado || "").trim();
+      const empleadoId = (filtros.empleadoId || "").trim();
+      const destinatario = (filtros.destinatario || "").trim().toLowerCase();
+
+      // Preparar opciones
+      const opciones = {
+        page,
+        size,
+        sortBy: filtros.sortBy || 'fecha_envio',
+        order: filtros.order || 'DESC',
+        q: q || undefined,
+        tipo: tipo || undefined,
+        estado: estado || undefined,
+        empleadoId: empleadoId || undefined,
+        destinatario: destinatario || undefined
+      };
+
+      const resultado = await notificacionRepository.obtenerConPaginacion(opciones);
+
+      return {
+        success: true,
+        statusCode: 200,
+        data: {
+          page: resultado.page,
+          size: resultado.size,
+          totalRecords: resultado.totalRecords,
+          totalPages: resultado.totalPages,
+          items: resultado.items
+        }
+      };
+    } catch (error) {
+      console.error('Error al obtener notificaciones con paginación:', error);
+      return {
+        success: false,
+        statusCode: 500,
+        message: 'Error interno al obtener las notificaciones'
+      };
+    }
+  }
+
+  /**
    * Obtiene notificaciones de un empleado específico
    */
   async obtenerPorEmpleado(empleadoId) {

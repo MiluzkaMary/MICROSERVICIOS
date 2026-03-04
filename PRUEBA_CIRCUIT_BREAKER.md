@@ -108,18 +108,30 @@ curl -X POST http://localhost:8080/empleados -H "Content-Type: application/json"
 ⏱️ **Observa:** Tarda ~3 segundos (timeout)
 ❌ **Responde:** `503 Service Unavailable`
 
-### 5.2 Repetir 4 veces más (cambia el email cada vez)
+### 5.2 Ejecutar múltiples peticiones en bucle
+Usa este comando de PowerShell para ejecutar 5 peticiones automáticamente:
+
 ```powershell
-curl -X POST http://localhost:8080/empleados -H "Content-Type: application/json" -d '{\"id\":\"E002\",\"nombre\":\"Ana\",\"email\":\"ana2@test.com\",\"departamentoId\":\"1\",\"fechaIngreso\":\"2024-01-15\"}'
-
-curl -X POST http://localhost:8080/empleados -H "Content-Type: application/json" -d '{\"id\":\"E003\",\"nombre\":\"Luis\",\"email\":\"luis3@test.com\",\"departamentoId\":\"1\",\"fechaIngreso\":\"2024-01-15\"}'
-
-curl -X POST http://localhost:8080/empleados -H "Content-Type: application/json" -d '{\"id\":\"E004\",\"nombre\":\"Carla\",\"email\":\"carla4@test.com\",\"departamentoId\":\"1\",\"fechaIngreso\":\"2024-01-15\"}'
-
-curl -X POST http://localhost:8080/empleados -H "Content-Type: application/json" -d '{\"id\":\"E005\",\"nombre\":\"Pedro\",\"email\":\"pedro5@test.com\",\"departamentoId\":\"1\",\"fechaIngreso\":\"2024-01-15\"}'
+1..5 | ForEach-Object {
+    try {
+        $body = @{
+            id = "TEST$_"
+            nombre = "Usuario Test"
+            email = "test$_@ejemplo.com"
+            departamentoId = "1"
+            fechaIngreso = "2024-03-02"
+        } | ConvertTo-Json
+        
+        Invoke-RestMethod -Uri "http://localhost:8080/empleados" -Method Post -ContentType "application/json" -Body $body -ErrorAction Stop | Out-Null
+        Write-Host "Peticion $_ completada" -ForegroundColor Green
+    } catch {
+        Write-Host "Peticion $_ fallida" -ForegroundColor Red
+    }
+    Start-Sleep -Milliseconds 300
+}
 ```
 
-Cada una tarda ~3 segundos
+⏱️ **Observa:** Cada petición tarda ~3 segundos (timeout)
 
 ### 5.3 Ver estado del Circuit Breaker
 ```powershell

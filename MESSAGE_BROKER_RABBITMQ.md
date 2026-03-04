@@ -29,6 +29,7 @@ DELETE /empleados/{id} → Eliminar empleado de DB
     ↓
 Publicar evento "empleado.eliminado" en RabbitMQ
     ↓
+    ├─→ Cola: perfiles.empleado_eliminado → Servicio Perfiles (eliminar perfil)
     └─→ Cola: notificaciones.empleado_eliminado → Servicio Notificaciones (enviar email desvinculación)
 ```
 
@@ -43,6 +44,7 @@ Publicar evento "empleado.eliminado" en RabbitMQ
 2. **`empleado.eliminado`**
    - **Publisher**: Servicio Empleados
    - **Consumers**: 
+     - Servicio Perfiles (elimina el perfil del empleado)
      - Servicio Notificaciones (envía email de desvinculación)
 
 ---
@@ -323,12 +325,13 @@ channel.consume(QUEUE_ELIMINADO, async (mensaje) => {
 
 **Routing Keys:**
 - `empleado.creado` → Múltiples consumidores (Perfiles, Notificaciones)
-- `empleado.eliminado` → Notificaciones
+- `empleado.eliminado` → Múltiples consumidores (Perfiles, Notificaciones)
 
 **Colas:**
 1. `perfiles.empleado_creado` - Consume `empleado.creado`
-2. `notificaciones.empleado_creado` - Consume `empleado.creado`
-3. `notificaciones.empleado_eliminado` - Consume `empleado.eliminado`
+2. `perfiles.empleado_eliminado` - Consume `empleado.eliminado`
+3. `notificaciones.empleado_creado` - Consume `empleado.creado`
+4. `notificaciones.empleado_eliminado` - Consume `empleado.eliminado`
 
 ---
 
