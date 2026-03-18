@@ -8,9 +8,10 @@ class EmpleadoService {
   /**
    * Crea un nuevo empleado
    * @param {Object} datos 
+   * @param {string} authToken - Token JWT para validar departamento (opcional)
    * @returns {Promise<Object>} 
    */
-  async crearEmpleado(datos) {
+  async crearEmpleado(datos, authToken = null) {
     // Crear instancia del modelo
     const empleado = new Empleado(datos);
 
@@ -36,12 +37,19 @@ class EmpleadoService {
 
       let departamentoResponse;
       try {
+        // Preparar headers con token JWT si está disponible
+        const headers = {};
+        if (authToken) {
+          headers['Authorization'] = `Bearer ${authToken}`;
+        }
+        
         // Hacer petición con Circuit Breaker para resiliencia
         // Circuit Breaker maneja los fallos, no necesitamos reintentos en httpGet
         departamentoResponse = await httpGetWithCircuitBreaker(departamentoUrl, {
           timeout: 3000,
           retries: 0,  // Sin reintentos - el Circuit Breaker maneja la lógica de fallos
-          retryDelay: 0
+          retryDelay: 0,
+          headers: headers
         });
       } catch (error) {
         // Error de red, timeout o servicio caído
@@ -65,6 +73,8 @@ class EmpleadoService {
       }
 
       // Validar respuesta del servicio de departamentos
+      console.log(`Respuesta del servicio de departamentos: statusCode=${departamentoResponse.statusCode}, ok=${departamentoResponse.ok}`);
+      
       if (departamentoResponse.statusCode === 404) {
         return {
           success: false,
@@ -78,6 +88,7 @@ class EmpleadoService {
         console.log(`Departamento ${empleado.departamentoId} validado correctamente`);
       } else {
         // Cualquier otro código de error del servicio de departamentos
+        console.error(`Código de estado inesperado del servicio de departamentos: ${departamentoResponse.statusCode}`);
         return {
           success: false,
           statusCode: 502,

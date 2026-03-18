@@ -5,6 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const empleadoController = require('../controllers/empleadoController');
+const { requiereAuth, requiereAdmin } = require('../middlewares/authMiddleware');
 
 /**
  * @swagger
@@ -23,6 +24,8 @@ const empleadoController = require('../controllers/empleadoController');
  *       - Timeout: 3 segundos
  *       - Reintentos: 2
  *       - Si el servicio de departamentos no responde, retorna 503
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -38,6 +41,24 @@ const empleadoController = require('../controllers/empleadoController');
  *               $ref: '#/components/schemas/Empleado'
  *       400:
  *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         description: No autenticado o token inválido
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *       403:
+ *         description: Requiere permisos de administrador
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
  *       409:
  *         $ref: '#/components/responses/Conflict'
  *       500:
@@ -45,7 +66,7 @@ const empleadoController = require('../controllers/empleadoController');
  *       503:
  *         $ref: '#/components/responses/ServiceUnavailable'
  */
-router.post('/', (req, res) => empleadoController.crear(req, res));
+router.post('/', requiereAuth, requiereAdmin, (req, res) => empleadoController.crear(req, res));
 
 /**
  * @swagger
@@ -55,6 +76,8 @@ router.post('/', (req, res) => empleadoController.crear(req, res));
  *       - Empleados
  *     summary: Obtener un empleado por ID
  *     description: Busca y retorna un empleado específico por su identificador único
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -70,12 +93,14 @@ router.post('/', (req, res) => empleadoController.crear(req, res));
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Empleado'
+ *       401:
+ *         description: No autenticado o token inválido
  *       404:
  *         $ref: '#/components/responses/NotFound'
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.get('/:id', (req, res) => empleadoController.obtenerPorId(req, res));
+router.get('/:id', requiereAuth, (req, res) => empleadoController.obtenerPorId(req, res));
 
 /**
  * @swagger
@@ -92,6 +117,8 @@ router.get('/:id', (req, res) => empleadoController.obtenerPorId(req, res));
  *       - Filtrado por nombre, departamento
  *       - Búsqueda general con parámetro 'q'
  *       - Ordenamiento por cualquier campo
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: query
  *         name: page
@@ -144,10 +171,12 @@ router.get('/:id', (req, res) => empleadoController.obtenerPorId(req, res));
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/EmpleadoPaginado'
+ *       401:
+ *         description: No autenticado o token inválido
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.get('/', (req, res) => empleadoController.obtenerTodos(req, res));
+router.get('/', requiereAuth, (req, res) => empleadoController.obtenerTodos(req, res));
 
 /**
  * @swagger
@@ -157,6 +186,8 @@ router.get('/', (req, res) => empleadoController.obtenerTodos(req, res));
  *       - Empleados
  *     summary: Actualizar un empleado
  *     description: Actualiza los datos de un empleado existente
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -180,12 +211,16 @@ router.get('/', (req, res) => empleadoController.obtenerTodos(req, res));
  *               $ref: '#/components/schemas/Empleado'
  *       400:
  *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         description: No autenticado o token inválido
+ *       403:
+ *         description: Requiere permisos de administrador
  *       404:
  *         $ref: '#/components/responses/NotFound'
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.put('/:id', (req, res) => empleadoController.actualizar(req, res));
+router.put('/:id', requiereAuth, requiereAdmin, (req, res) => empleadoController.actualizar(req, res));
 
 /**
  * @swagger
@@ -197,6 +232,8 @@ router.put('/:id', (req, res) => empleadoController.actualizar(req, res));
  *     description: |
  *       Elimina un empleado del sistema y publica un evento `empleado.eliminado` 
  *       en RabbitMQ para notificar a otros servicios.
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -216,11 +253,15 @@ router.put('/:id', (req, res) => empleadoController.actualizar(req, res));
  *                 message:
  *                   type: string
  *                   example: Empleado EMP001 eliminado exitosamente
+ *       401:
+ *         description: No autenticado o token inválido
+ *       403:
+ *         description: Requiere permisos de administrador
  *       404:
  *         $ref: '#/components/responses/NotFound'
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.delete('/:id', (req, res) => empleadoController.eliminar(req, res));
+router.delete('/:id', requiereAuth, requiereAdmin, (req, res) => empleadoController.eliminar(req, res));
 
 module.exports = router;

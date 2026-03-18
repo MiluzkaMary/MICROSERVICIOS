@@ -3,6 +3,9 @@
  */
 const { createTransporter } = require('../config/email');
 
+// URL del servicio de autenticación (parametrizable)
+const AUTH_SERVICE_URL = process.env.AUTH_SERVICE_URL || 'http://localhost:8084';
+
 class EmailService {
   constructor() {
     this.transporter = null;
@@ -77,6 +80,33 @@ Equipo de Recursos Humanos`;
   }
 
   /**
+   * Envía email de activación de cuenta con token
+   */
+  async enviarEmailActivacion(nombre, email, empleadoId, token) {
+    const asunto = '🔐 Activa tu cuenta - Sistema de Empleados';
+    const mensaje = `Hola ${nombre || empleadoId},
+
+Tu cuenta ha sido creada exitosamente.
+
+Para activar tu cuenta y establecer tu contraseña, usa el siguiente token:
+
+Token: ${token}
+
+Este token expira en 24 horas.
+
+Endpoint: POST ${AUTH_SERVICE_URL}/auth/reset-password
+Body: {
+  "token": "${token}",
+  "nuevaPassword": "TuNuevaPassword123"
+}
+
+Saludos,
+Equipo de Recursos Humanos`;
+
+    return await this.enviarEmail(email, asunto, mensaje);
+  }
+
+  /**
    * Envía notificación de desvinculación
    */
   async enviarDesvinculacion(nombre, email, empleadoId, motivo = '') {
@@ -90,6 +120,35 @@ Tu ID de empleado ${empleadoId} quedará inactivo.
 
 Te deseamos lo mejor en tus futuros proyectos.
 
+Equipo de Recursos Humanos`;
+
+    return await this.enviarEmail(email, asunto, mensaje);
+  }
+
+  /**
+   * Envía email de recuperación de contraseña con token
+   */
+  async enviarEmailRecuperacion(email, empleadoId, token) {
+    const asunto = '🔑 Recuperación de Contraseña - Sistema de Empleados';
+    const mensaje = `Hola,
+
+Hemos recibido una solicitud para restablecer la contraseña de tu cuenta (${empleadoId}).
+
+Para restablecer tu contraseña, usa el siguiente token:
+
+Token: ${token}
+
+Este token expira en 24 horas.
+
+Endpoint: POST ${AUTH_SERVICE_URL}/auth/reset-password
+Body: {
+  "token": "${token}",
+  "nuevaPassword": "TuNuevaPassword123"
+}
+
+Si no solicitaste este cambio, ignora este mensaje.
+
+Saludos,
 Equipo de Recursos Humanos`;
 
     return await this.enviarEmail(email, asunto, mensaje);

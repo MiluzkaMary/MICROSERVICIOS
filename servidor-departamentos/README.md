@@ -1,142 +1,40 @@
-# Servidor Departamentos
+﻿# servidor-departamentos
 
-Microservicio para gestión de departamentos con Node.js, Express y PostgreSQL.
+## Descripcion del servicio
+Servicio de catalogo de departamentos.
 
-## Estructura
+## Responsabilidad dentro del sistema
+- Mantener el catalogo de departamentos.
+- Responder validaciones de departamento para servidor-empleados.
 
-```
-servidor-departamentos/
-├── src/
-│   ├── config/
-│   │   └── database.js     # Configuración PostgreSQL
-│   ├── models/
-│   │   └── departamento.js # Modelo Departamento
-│   ├── validators/
-│   │   └── departamentoValidator.js # Validaciones
-│   ├── repositories/
-│   │   └── departamentoRepository.js # Acceso a datos
-│   ├── services/
-│   │   └── departamentoService.js # Lógica de negocio
-│   ├── controllers/
-│   │   └── departamentoController.js # Controladores
-│   ├── routes/
-│   │   └── departamentoRoutes.js # Rutas
-│   └── app.js              # Configuración Express
-├── index.js                # Punto de entrada
-└── init.sql                # Script BD
-```
+## Endpoints reales
+- POST /departamentos
+- GET /departamentos
+- GET /departamentos/:id
+- GET /health
+- GET /api-docs
+- GET /api-docs.json
 
-## Endpoints
+## Base de datos
+- Motor: PostgreSQL
+- Base: departamentos_db
+- Tabla principal: departamentos
 
-### `POST /departamentos`
-Crear un nuevo departamento
+Campos relevantes:
+- id
+- nombre
+- descripcion
 
-**Request Body:**
-```json
-{
-  "nombre": "Recursos Humanos",
-  "descripcion": "Gestión de personal y nómina"
-}
-```
+Seed en init.sql:
+- Tecnologia
+- Recursos Humanos
+- Ventas
+- Marketing
+- Finanzas
 
-**Respuesta: 201 Created**
-```json
-{
-  "id": 1,
-  "nombre": "Recursos Humanos",
-  "descripcion": "Gestión de personal y nómina"
-}
-```
+## Eventos RabbitMQ
+- No publica eventos.
+- No consume eventos.
 
-### `GET /departamentos/:id`
-Obtener un departamento por ID
-
-**Respuesta: 201 OK**
-```json
-{
-  "id": 1,
-  "nombre": "Recursos Humanos",
-  "descripcion": "Gestión de personal y nómina"
-}
-```
-
-**Respuesta: 404 Not Found** (si no existe)
-
-### `GET /departamentos`
-Listar departamentos con soporte para paginación y filtrado
-
-**Query Parameters (opcionales):**
-- `page` - Número de página (default: 1, mínimo: 1)
-- `size` - Registros por página (default: 10, mínimo: 1, máximo: 100)
-- `sortBy` - Campo para ordenar (id, nombre, descripcion)
-- `order` - Dirección del orden (ASC o DESC)
-- `q` - Búsqueda general en nombre y descripción
-- `nombre` - Filtrar por nombre (búsqueda parcial)
-
-**Ejemplos:**
-```
-GET /departamentos?page=1&size=10
-GET /departamentos?q=ventas
-GET /departamentos?nombre=Recursos&sortBy=nombre&order=ASC
-GET /departamentos?page=2&size=5
-```
-
-**Respuesta con paginación: 201 OK**
-```json
-{
-  "page": 1,
-  "size": 10,
-  "totalRecords": 25,
-  "totalPages": 3,
-  "items": [
-    {
-      "id": 1,
-      "nombre": "Recursos Humanos",
-      "descripcion": "Gestión de personal"
-    },
-    {
-      "id": 2,
-      "nombre": "Tecnología",
-      "descripcion": "Desarrollo e infraestructura"
-    }
-  ]
-}
-```
-
-### `GET /health`
-Health check del servidor
-
-**Respuesta: 200 OK**
-```json
-{
-  "status": "OK",
-  "service": "servidor-departamentos"
-}
-```
-
-## Formato de Respuestas
-
-### Respuestas Exitosas
-Todas las operaciones exitosas devuelven **201 OK** con los datos correspondientes (excepto `/health` que devuelve 200).
-
-### Respuestas de Error
-```json
-{
-  "error": "Bad Request",
-  "message": "Datos inválidos",
-  "status": 400,
-  "path": "/departamentos",
-  "timestamp": "2026-02-23T12:00:00.000Z",
-  "errors": ["nombre es requerido"]
-}
-```
-
-## Puerto
-- **Desarrollo local**: 8081
-- **Docker**: 8081 (interno y externo)
-
-## Base de Datos
-- **PostgreSQL 15 Alpine**
-- **Puerto externo**: 5433 (para evitar conflicto con empleados:5432)
-- **Puerto interno**: 5432
-- **Nombre**: departamentos_db
+## Participacion en el flujo general
+- Sirve como dependencia sincronica de servidor-empleados para validar departamento_id en altas.

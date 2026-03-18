@@ -202,6 +202,137 @@ class NotificacionService {
       };
     }
   }
+
+  /**
+   * Procesa evento de usuario creado y envía email de activación
+   */
+  async procesarUsuarioCreado(empleadoId, email, token, nombre = null) {
+    console.log(`📬 Procesando email de activación para ${empleadoId}`);
+
+    // Crear notificación en DB
+    const notificacion = new Notificacion({
+      empleadoId: empleadoId,
+      tipo: 'ACTIVACION',
+      destinatario: email,
+      asunto: '🔐 Activa tu cuenta - Sistema de Empleados',
+      mensaje: `Token de activación generado para ${empleadoId}`,
+      estado: 'PENDIENTE',
+      fechaEnvio: new Date()
+    });
+
+    let notificacionGuardada;
+
+    try {
+      // Guardar en DB con estado PENDIENTE
+      notificacionGuardada = await notificacionRepository.create(notificacion);
+
+      // Intentar enviar email
+      const resultadoEmail = await emailService.enviarEmailActivacion(
+        nombre,
+        email,
+        empleadoId,
+        token
+      );
+
+      // Actualizar estado según resultado
+      if (resultadoEmail.success) {
+        await notificacionRepository.updateEstado(notificacionGuardada.id, 'ENVIADA');
+        notificacionGuardada.estado = 'ENVIADA';
+        console.log(`✅ Email de activación enviado a ${email}`);
+      } else {
+        await notificacionRepository.updateEstado(notificacionGuardada.id, 'FALLIDA');
+        notificacionGuardada.estado = 'FALLIDA';
+        console.warn(`⚠️ Notificación registrada pero email falló: ${resultadoEmail.error}`);
+      }
+
+      return {
+        success: true,
+        statusCode: 201,
+        message: 'Email de activación procesado',
+        data: notificacionGuardada
+      };
+
+    } catch (error) {
+      console.error('❌ Error al procesar email de activación:', error);
+      
+      // Si se guardó pero falló el email, actualizar estado
+      if (notificacionGuardada) {
+        await notificacionRepository.updateEstado(notificacionGuardada.id, 'FALLIDA');
+      }
+
+      return {
+        success: false,
+        statusCode: 500,
+        message: 'Error al procesar email de activación',
+        errors: [error.message]
+      };
+    }
+  }
+
+  /**
+   * Procesa evento de recuperación de contraseña y envía email con token
+   */
+  async procesarUsuarioRecuperacion(empleadoId, email, token) {
+    console.log(`📬 Procesando email de recuperación de contraseña para ${empleadoId}`);
+
+    // Crear notificación en DB
+    const notificacion = new Notificacion({
+      empleadoId: empleadoId,
+      tipo: 'RECUPERACION',
+      destinatario: email,
+      asunto: '🔑 Recuperación de Contraseña - Sistema de Empleados',
+      mensaje: `Token de recuperación generado para ${empleadoId}`,
+      estado: 'PENDIENTE',
+      fechaEnvio: new Date()
+    });
+
+    let notificacionGuardada;
+
+    try {
+      // Guardar en DB con estado PENDIENTE
+      notificacionGuardada = await notificacionRepository.create(notificacion);
+
+      // Intentar enviar email
+      const resultadoEmail = await emailService.enviarEmailRecuperacion(
+        email,
+        empleadoId,
+        token
+      );
+
+      // Actualizar estado según resultado
+      if (resultadoEmail.success) {
+        await notificacionRepository.updateEstado(notificacionGuardada.id, 'ENVIADA');
+        notificacionGuardada.estado = 'ENVIADA';
+        console.log(`✅ Email de recuperación enviado a ${email}`);
+      } else {
+        await notificacionRepository.updateEstado(notificacionGuardada.id, 'FALLIDA');
+        notificacionGuardada.estado = 'FALLIDA';
+        console.warn(`⚠️ Notificación registrada pero email falló: ${resultadoEmail.error}`);
+      }
+
+      return {
+        success: true,
+        statusCode: 201,
+        message: 'Email de recuperación procesado',
+        data: notificacionGuardada
+      };
+
+    } catch (error) {
+      console.error('❌ Error al procesar email de recuperación:', error);
+      
+      // Si se guardó pero falló el email, actualizar estado
+      if (notificacionGuardada) {
+        await notificacionRepository.updateEstado(notificacionGuardada.id, 'FALLIDA');
+      }
+
+      return {
+        success: false,
+        statusCode: 500,
+        message: 'Error al procesar email de recuperación',
+        errors: [error.message]
+      };
+    }
+  }
 }
 
 module.exports = new NotificacionService();

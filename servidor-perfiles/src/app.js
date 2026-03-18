@@ -48,25 +48,11 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Manejo de rutas no encontradas
-app.use((req, res) => {
-  res.status(404).json({
-    success: false,
-    statusCode: 404,
-    message: 'Ruta no encontrada',
-    errors: [`La ruta ${req.method} ${req.path} no existe`]
-  });
-});
+// Middleware para rutas no encontradas (404) - debe ir después de todas las rutas
+const { notFoundHandler, globalErrorHandler } = require('./utils/errorHandler');
+app.use(notFoundHandler);
 
-// Manejo de errores global
-app.use((err, req, res, next) => {
-  console.error('Error no manejado:', err);
-  res.status(500).json({
-    success: false,
-    statusCode: 500,
-    message: 'Error interno del servidor',
-    errors: [err.message]
-  });
-});
+// Middleware global de manejo de errores - debe ser el último
+app.use(globalErrorHandler);
 
 module.exports = app;
