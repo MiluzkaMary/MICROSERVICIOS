@@ -9,11 +9,9 @@ const { httpGet } = require('./httpClient');
  * Configuración del Circuit Breaker
  */
 const circuitBreakerOptions = {
-<<<<<<< HEAD
   timeout: 3000, // Timeout de 3 segundos (coincide con httpGet)
-=======
+  timeout: 3000, // Timeout de 3 segundos (coincide con httpGet)
   timeout: 3000, // Timeout de 3 segundos (debe coincidir con timeout de httpGet)
->>>>>>> 91b3bda890a147132443bfe7b113e3397fcd17f6
   errorThresholdPercentage: 50, // Si el 50% de las llamadas fallan, abre el circuito
   resetTimeout: 10000, // Después de 10 segundos, intenta cerrar el circuito (estado half-open)
   rollingCountTimeout: 60000, // Ventana de tiempo para calcular estadísticas (10 segundos)
