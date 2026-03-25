@@ -19,7 +19,7 @@ const createTransporter = () => {
     // }
   };
 
-  const transporter = nodemailer.createTransporter(config);
+  const transporter = nodemailer.createTransport(config);
 
   // Verificar configuración
   transporter.verify((error, success) => {

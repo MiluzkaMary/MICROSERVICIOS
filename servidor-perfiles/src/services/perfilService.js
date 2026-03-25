@@ -42,6 +42,56 @@ class PerfilService {
   }
 
   /**
+   * Obtiene perfiles con paginación y filtrado
+   */
+  async obtenerPerfilesConPaginacion(filtros) {
+    try {
+      // Validar y parsear parámetros con valores seguros
+      const page = Math.max(parseInt(filtros.page || "1", 10), 1);
+      const size = Math.min(Math.max(parseInt(filtros.size || "10", 10), 1), 100);
+
+      // Preparar filtros sanitizados
+      const q = (filtros.q || "").trim().toLowerCase();
+      const nombre = (filtros.nombre || "").trim().toLowerCase();
+      const email = (filtros.email || "").trim().toLowerCase();
+      const ciudad = (filtros.ciudad || "").trim().toLowerCase();
+
+      // Preparar opciones
+      const opciones = {
+        page,
+        size,
+        sortBy: filtros.sortBy || 'fecha_creacion',
+        order: filtros.order || 'DESC',
+        q: q || undefined,
+        nombre: nombre || undefined,
+        email: email || undefined,
+        ciudad: ciudad || undefined
+      };
+
+      const resultado = await perfilRepository.obtenerConPaginacion(opciones);
+
+      return {
+        success: true,
+        statusCode: 200,
+        data: {
+          page: resultado.page,
+          size: resultado.size,
+          totalRecords: resultado.totalRecords,
+          totalPages: resultado.totalPages,
+          items: resultado.items
+        }
+      };
+    } catch (error) {
+      console.error('Error al obtener perfiles con paginación:', error);
+      return {
+        success: false,
+        statusCode: 500,
+        message: 'Error interno al obtener los perfiles'
+      };
+    }
+  }
+
+  /**
    * Actualiza un perfil existente
    */
   async actualizarPerfil(empleadoId, datos) {
@@ -119,6 +169,55 @@ class PerfilService {
       message: 'Perfil creado exitosamente',
       data: perfilCreado
     };
+  }
+
+  /**
+   * Elimina un perfil por empleadoId
+   * Este método será llamado cuando se reciba el evento empleado.eliminado
+   */
+  async eliminarPerfilPorEmpleadoId(empleadoId) {
+    try {
+      // Verificar que el perfil existe
+      const perfilExiste = await perfilRepository.existsByEmpleadoId(empleadoId);
+
+      if (!perfilExiste) {
+        console.warn(`No existe un perfil para el empleado ${empleadoId}`);
+        return {
+          success: false,
+          statusCode: 404,
+          message: `No existe un perfil para el empleado ${empleadoId}`,
+          errors: ['Perfil no encontrado']
+        };
+      }
+
+      // Eliminar perfil
+      const perfilEliminado = await perfilRepository.deleteByEmpleadoId(empleadoId);
+
+      if (!perfilEliminado) {
+        return {
+          success: false,
+          statusCode: 404,
+          message: `No se pudo eliminar el perfil del empleado ${empleadoId}`,
+          errors: ['Error al eliminar perfil']
+        };
+      }
+
+      console.log(`✅ Perfil eliminado automáticamente para empleado ${empleadoId}`);
+
+      return {
+        success: true,
+        statusCode: 200,
+        message: `Perfil del empleado ${empleadoId} eliminado exitosamente`,
+        data: perfilEliminado
+      };
+    } catch (error) {
+      console.error('Error al eliminar perfil:', error);
+      return {
+        success: false,
+        statusCode: 500,
+        message: 'Error interno al eliminar el perfil'
+      };
+    }
   }
 }
 

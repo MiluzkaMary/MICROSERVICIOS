@@ -6,7 +6,11 @@ class EmpleadoController {
    * POST /empleados 
    */
   async crear(req, res) {
-    const resultado = await empleadoService.crearEmpleado(req.body || {});
+    // Extraer token JWT del header Authorization para reenviarlo a otros servicios
+    const authHeader = req.headers.authorization;
+    const token = authHeader ? authHeader.replace('Bearer ', '') : null;
+    
+    const resultado = await empleadoService.crearEmpleado(req.body || {}, token);
 
     if (!resultado.success) {
       return res.status(resultado.statusCode).json({

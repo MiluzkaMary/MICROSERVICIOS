@@ -40,11 +40,13 @@ class PerfilController {
 
   /**
    * GET /perfiles
-   * Obtiene todos los perfiles
+   * Obtiene todos los perfiles con paginación
+   * Query params: page, size, sortBy, order, q, nombre, email, ciudad
    */
   async listarPerfiles(req, res) {
     try {
-      const resultado = await perfilService.obtenerTodos();
+      // Usar paginación por defecto
+      const resultado = await perfilService.obtenerPerfilesConPaginacion(req.query);
 
       return res.status(resultado.statusCode).json(resultado);
     } catch (error) {

@@ -4,6 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const notificacionController = require('../controllers/notificacionController');
+const { requiereAuth, requiereAdmin } = require('../middlewares/authMiddleware');
 
 /**
  * @swagger
@@ -12,7 +13,9 @@ const notificacionController = require('../controllers/notificacionController');
  *     tags:
  *       - Notificaciones
  *     summary: Lista todas las notificaciones registradas
- *     description: Obtiene el historial completo de notificaciones enviadas
+ *     description: Obtiene el historial completo de notificaciones enviadas (solo administradores)
+ *     security:
+ *       - BearerAuth: []
  *     responses:
  *       200:
  *         description: Lista de notificaciones obtenida exitosamente
@@ -34,8 +37,12 @@ const notificacionController = require('../controllers/notificacionController');
  *                 total:
  *                   type: integer
  *                   example: 25
+ *       401:
+ *         description: No autenticado o token inválido
+ *       403:
+ *         description: Requiere permisos de administrador
  */
-router.get('/', notificacionController.listarNotificaciones);
+router.get('/', requiereAuth, requiereAdmin, notificacionController.listarNotificaciones);
 
 /**
  * @swagger
@@ -44,7 +51,9 @@ router.get('/', notificacionController.listarNotificaciones);
  *     tags:
  *       - Notificaciones
  *     summary: Obtiene estadísticas de notificaciones
- *     description: Retorna estadísticas generales del sistema de notificaciones
+ *     description: Retorna estadísticas generales del sistema de notificaciones (solo administradores)
+ *     security:
+ *       - BearerAuth: []
  *     responses:
  *       200:
  *         description: Estadísticas obtenidas exitosamente
@@ -80,8 +89,12 @@ router.get('/', notificacionController.listarNotificaciones);
  *                     pendientes:
  *                       type: string
  *                       example: "2"
+ *       401:
+ *         description: No autenticado o token inválido
+ *       403:
+ *         description: Requiere permisos de administrador
  */
-router.get('/estadisticas/resumen', notificacionController.obtenerEstadisticas);
+router.get('/estadisticas/resumen', requiereAuth, requiereAdmin, notificacionController.obtenerEstadisticas);
 
 /**
  * @swagger
@@ -91,6 +104,8 @@ router.get('/estadisticas/resumen', notificacionController.obtenerEstadisticas);
  *       - Notificaciones
  *     summary: Lista notificaciones de un empleado específico
  *     description: Obtiene el historial de notificaciones enviadas a un empleado
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: empleadoId
@@ -126,8 +141,10 @@ router.get('/estadisticas/resumen', notificacionController.obtenerEstadisticas);
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Error'
+ *       401:
+ *         description: No autenticado o token inválido
  */
-router.get('/:empleadoId', notificacionController.listarPorEmpleado);
+router.get('/:empleadoId', requiereAuth, notificacionController.listarPorEmpleado);
 
 /**
  * @swagger
@@ -136,7 +153,9 @@ router.get('/:empleadoId', notificacionController.listarPorEmpleado);
  *     tags:
  *       - Eventos
  *     summary: Endpoint interno para evento empleado.creado
- *     description: Procesa el evento de empleado creado y envía notificación de bienvenida. En el futuro será reemplazado por RabbitMQ.
+ *     description: |
+ *       Procesa el evento de empleado creado y envía notificación de bienvenida.
+ *       Este endpoint es llamado internamente por RabbitMQ y no requiere autenticación.
  *     requestBody:
  *       required: true
  *       content:
@@ -178,7 +197,9 @@ router.post('/evento/empleado-creado', notificacionController.manejarEmpleadoCre
  *     tags:
  *       - Eventos
  *     summary: Endpoint interno para evento empleado.desvinculado
- *     description: Procesa el evento de empleado desvinculado y envía notificación. En el futuro será reemplazado por RabbitMQ.
+ *     description: |
+ *       Procesa el evento de empleado desvinculado y envía notificación.
+ *       Este endpoint es llamado internamente por RabbitMQ y no requiere autenticación.
  *     requestBody:
  *       required: true
  *       content:

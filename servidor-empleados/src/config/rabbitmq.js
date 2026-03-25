@@ -17,36 +17,44 @@ const EXCHANGE_NAME = 'empleados_events';
 const EXCHANGE_TYPE = 'topic';
 
 /**
- * Conecta a RabbitMQ
+ * Conecta a RabbitMQ con reintentos
  */
-async function connect() {
-  try {
-    const url = `amqp://${RABBITMQ_CONFIG.user}:${RABBITMQ_CONFIG.password}@${RABBITMQ_CONFIG.host}:${RABBITMQ_CONFIG.port}`;
-    
-    connection = await amqp.connect(url);
-    channel = await connection.createChannel();
+async function connect(retries = 5, delay = 3000) {
+  for (let i = 0; i < retries; i++) {
+    try {
+      const url = `amqp://${RABBITMQ_CONFIG.user}:${RABBITMQ_CONFIG.password}@${RABBITMQ_CONFIG.host}:${RABBITMQ_CONFIG.port}`;
+      
+      connection = await amqp.connect(url);
+      channel = await connection.createChannel();
 
-    // Declarar exchange de tipo topic
-    await channel.assertExchange(EXCHANGE_NAME, EXCHANGE_TYPE, {
-      durable: true
-    });
+      // Declarar exchange de tipo topic
+      await channel.assertExchange(EXCHANGE_NAME, EXCHANGE_TYPE, {
+        durable: true
+      });
 
-    console.log('✅ Conectado a RabbitMQ');
-    console.log(`📡 Exchange "${EXCHANGE_NAME}" (${EXCHANGE_TYPE}) declarado`);
+      console.log('✅ Conectado a RabbitMQ');
+      console.log(`📡 Exchange "${EXCHANGE_NAME}" (${EXCHANGE_TYPE}) declarado`);
 
-    // Manejar errores de conexión
-    connection.on('error', (err) => {
-      console.error('❌ Error de conexión RabbitMQ:', err.message);
-    });
+      // Manejar errores de conexión
+      connection.on('error', (err) => {
+        console.error('❌ Error de conexión RabbitMQ:', err.message);
+      });
 
-    connection.on('close', () => {
-      console.warn('⚠️ Conexión a RabbitMQ cerrada');
-    });
+      connection.on('close', () => {
+        console.warn('⚠️ Conexión a RabbitMQ cerrada');
+      });
 
-    return channel;
-  } catch (error) {
-    console.error('❌ Error al conectar a RabbitMQ:', error.message);
-    throw error;
+      return channel;
+    } catch (error) {
+      console.warn(`⚠️ Intento ${i + 1}/${retries} - Error al conectar a RabbitMQ: ${error.message}`);
+      if (i < retries - 1) {
+        console.log(`⏳ Esperando ${delay}ms antes de reintentar...`);
+        await new Promise(resolve => setTimeout(resolve, delay));
+      } else {
+        console.error('❌ No se pudo conectar a RabbitMQ después de varios intentos');
+        throw error;
+      }
+    }
   }
 }
 

@@ -11,13 +11,15 @@ const http = require('http');
  * @param {number} options.timeout - Timeout en milisegundos (default: 3000)
  * @param {number} options.retries - Número de reintentos (default: 2)
  * @param {number} options.retryDelay - Delay entre reintentos en ms (default: 500)
+ * @param {Object} options.headers - Headers HTTP personalizados (opcional)
  * @returns {Promise<Object>} Respuesta con { statusCode, data, ok }
  */
 async function httpGet(url, options = {}) {
   const {
     timeout = 3000,
     retries = 2,
-    retryDelay = 500
+    retryDelay = 500,
+    headers = {}
   } = options;
 
   let lastError = null;
@@ -29,7 +31,7 @@ async function httpGet(url, options = {}) {
         await sleep(retryDelay);
       }
 
-      const result = await makeHttpRequest(url, timeout);
+      const result = await makeHttpRequest(url, timeout, headers);
       return result;
     } catch (error) {
       lastError = error;
@@ -49,7 +51,7 @@ async function httpGet(url, options = {}) {
  * Realiza la petición HTTP GET con timeout
  * @private
  */
-function makeHttpRequest(url, timeout) {
+function makeHttpRequest(url, timeout, customHeaders = {}) {
   return new Promise((resolve, reject) => {
     const parsedUrl = new URL(url);
     const options = {
@@ -60,7 +62,8 @@ function makeHttpRequest(url, timeout) {
       timeout: timeout,
       headers: {
         'Accept': 'application/json',
-        'User-Agent': 'Empleados-Service/1.0'
+        'User-Agent': 'Empleados-Service/1.0',
+        ...customHeaders
       }
     };
 

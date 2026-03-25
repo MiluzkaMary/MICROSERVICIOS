@@ -5,6 +5,7 @@
 const express = require('express');
 const router = express.Router();
 const departamentoController = require('../controllers/departamentoController');
+const { requiereAuth, requiereAdmin } = require('../middlewares/authMiddleware');
 
 /**
  * @swagger
@@ -20,6 +21,8 @@ const departamentoController = require('../controllers/departamentoController');
  *       - El nombre es requerido
  *       - El nombre debe ser único (previene duplicados)
  *       - La descripción es opcional
+ *     security:
+ *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
@@ -50,12 +53,16 @@ const departamentoController = require('../controllers/departamentoController');
  *               $ref: '#/components/schemas/Departamento'
  *       400:
  *         $ref: '#/components/responses/BadRequest'
+ *       401:
+ *         description: No autenticado o token inválido
+ *       403:
+ *         description: Requiere permisos de administrador
  *       409:
  *         $ref: '#/components/responses/Conflict'
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.post('/', (req, res) => departamentoController.crear(req, res));
+router.post('/', requiereAuth, requiereAdmin, (req, res) => departamentoController.crear(req, res));
 
 /**
  * @swagger
@@ -69,6 +76,8 @@ router.post('/', (req, res) => departamentoController.crear(req, res));
  *       
  *       Este endpoint es usado por el servicio de empleados para validar la existencia
  *       de un departamento antes de crear un empleado.
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
@@ -84,12 +93,14 @@ router.post('/', (req, res) => departamentoController.crear(req, res));
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/Departamento'
+ *       401:
+ *         description: No autenticado o token inválido
  *       404:
  *         $ref: '#/components/responses/NotFound'
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.get('/:id', (req, res) => departamentoController.obtenerPorId(req, res));
+router.get('/:id', requiereAuth, (req, res) => departamentoController.obtenerPorId(req, res));
 
 /**
  * @swagger
@@ -106,6 +117,8 @@ router.get('/:id', (req, res) => departamentoController.obtenerPorId(req, res));
  *       - Filtrado por nombre
  *       - Búsqueda general con parámetro 'q'
  *       - Ordenamiento por cualquier campo
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: query
  *         name: page
@@ -153,9 +166,11 @@ router.get('/:id', (req, res) => departamentoController.obtenerPorId(req, res));
  *           application/json:
  *             schema:
  *               $ref: '#/components/schemas/DepartamentoPaginado'
+ *       401:
+ *         description: No autenticado o token inválido
  *       500:
  *         $ref: '#/components/responses/InternalServerError'
  */
-router.get('/', (req, res) => departamentoController.obtenerTodos(req, res));
+router.get('/', requiereAuth, (req, res) => departamentoController.obtenerTodos(req, res));
 
 module.exports = router;

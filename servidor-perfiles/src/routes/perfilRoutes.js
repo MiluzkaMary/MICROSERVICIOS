@@ -4,6 +4,7 @@
 const express = require('express');
 const router = express.Router();
 const perfilController = require('../controllers/perfilController');
+const { requiereAuth } = require('../middlewares/authMiddleware');
 
 /**
  * @swagger
@@ -13,6 +14,8 @@ const perfilController = require('../controllers/perfilController');
  *       - Perfiles
  *     summary: Lista todos los perfiles
  *     description: Obtiene la lista completa de perfiles de empleados registrados
+ *     security:
+ *       - BearerAuth: []
  *     responses:
  *       200:
  *         description: Lista de perfiles obtenida exitosamente
@@ -34,8 +37,10 @@ const perfilController = require('../controllers/perfilController');
  *                 total:
  *                   type: integer
  *                   example: 10
+ *       401:
+ *         description: No autenticado o token inválido
  */
-router.get('/', perfilController.listarPerfiles);
+router.get('/', requiereAuth, perfilController.listarPerfiles);
 
 /**
  * @swagger
@@ -45,6 +50,8 @@ router.get('/', perfilController.listarPerfiles);
  *       - Perfiles
  *     summary: Consulta el perfil de un empleado
  *     description: Obtiene el perfil completo de un empleado específico
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: empleadoId
@@ -69,6 +76,8 @@ router.get('/', perfilController.listarPerfiles);
  *                   example: 200
  *                 data:
  *                   $ref: '#/components/schemas/Perfil'
+ *       401:
+ *         description: No autenticado o token inválido
  *       404:
  *         description: Perfil no encontrado
  *         content:
@@ -76,7 +85,7 @@ router.get('/', perfilController.listarPerfiles);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.get('/:empleadoId', perfilController.obtenerPerfil);
+router.get('/:empleadoId', requiereAuth, perfilController.obtenerPerfil);
 
 /**
  * @swagger
@@ -86,6 +95,8 @@ router.get('/:empleadoId', perfilController.obtenerPerfil);
  *       - Perfiles
  *     summary: Actualiza el perfil de un empleado
  *     description: Actualiza la información del perfil (teléfono, dirección, biografía, etc.)
+ *     security:
+ *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: empleadoId
@@ -136,6 +147,8 @@ router.get('/:empleadoId', perfilController.obtenerPerfil);
  *                   example: "Perfil actualizado exitosamente"
  *                 data:
  *                   $ref: '#/components/schemas/Perfil'
+ *       401:
+ *         description: No autenticado o token inválido
  *       404:
  *         description: Perfil no encontrado
  *         content:
@@ -149,7 +162,7 @@ router.get('/:empleadoId', perfilController.obtenerPerfil);
  *             schema:
  *               $ref: '#/components/schemas/Error'
  */
-router.put('/:empleadoId', perfilController.actualizarPerfil);
+router.put('/:empleadoId', requiereAuth, perfilController.actualizarPerfil);
 
 /**
  * @swagger
@@ -158,7 +171,9 @@ router.put('/:empleadoId', perfilController.actualizarPerfil);
  *     tags:
  *       - Perfiles
  *     summary: Endpoint interno para evento empleado.creado
- *     description: Crea un perfil por defecto cuando se registra un nuevo empleado. En el futuro será reemplazado por RabbitMQ.
+ *     description: |
+ *       Crea un perfil por defecto cuando se registra un nuevo empleado.
+ *       Este endpoint es llamado internamente por RabbitMQ y no requiere autenticación.
  *     requestBody:
  *       required: true
  *       content:

@@ -54,6 +54,14 @@ Microservicio para la gestión de empleados.
       }
     ],
     components: {
+      securitySchemes: {
+        BearerAuth: {
+          type: 'http',
+          scheme: 'bearer',
+          bearerFormat: 'JWT',
+          description: 'Token JWT obtenido del endpoint /auth/login del servicio de autenticación (puerto 8084)'
+        }
+      },
       schemas: {
         Empleado: {
           type: 'object',

@@ -24,6 +24,94 @@ class PerfilRepository {
   }
 
   /**
+   * Obtiene perfiles con paginación y filtrado
+   * @param {Object} opciones - Opciones de paginación y filtrado
+   * @returns {Promise<Object>} Objeto con datos y metadata de paginación
+   */
+  async obtenerConPaginacion(opciones = {}) {
+    const {
+      page = 1,
+      size = 10,
+      sortBy = 'fecha_creacion',
+      order = 'DESC',
+      q,
+      nombre,
+      email,
+      ciudad
+    } = opciones;
+
+    // Construir la cláusula WHERE dinámicamente
+    const condiciones = [];
+    const valores = [];
+    let paramIndex = 1;
+
+    // Búsqueda general con parámetro 'q' en múltiples campos
+    if (q) {
+      condiciones.push(`(
+        nombre ILIKE $${paramIndex} OR 
+        email ILIKE $${paramIndex} OR
+        ciudad ILIKE $${paramIndex}
+      )`);
+      valores.push(`%${q}%`);
+      paramIndex++;
+    }
+
+    if (nombre) {
+      condiciones.push(`nombre ILIKE $${paramIndex}`);
+      valores.push(`%${nombre}%`);
+      paramIndex++;
+    }
+
+    if (email) {
+      condiciones.push(`email ILIKE $${paramIndex}`);
+      valores.push(`%${email}%`);
+      paramIndex++;
+    }
+
+    if (ciudad) {
+      condiciones.push(`ciudad ILIKE $${paramIndex}`);
+      valores.push(`%${ciudad}%`);
+      paramIndex++;
+    }
+
+    const whereClause = condiciones.length > 0 ? `WHERE ${condiciones.join(' AND ')}` : '';
+
+    // Validar campo de ordenamiento para prevenir SQL injection
+    const camposPermitidos = ['empleado_id', 'nombre', 'email', 'ciudad', 'fecha_creacion'];
+    const campoOrden = camposPermitidos.includes(sortBy) ? sortBy : 'fecha_creacion';
+    const direccionOrden = order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+
+    // Consulta para contar el total de registros
+    const countQuery = `SELECT COUNT(*) as total FROM perfiles ${whereClause}`;
+    const countResult = await pool.query(countQuery, valores);
+    const totalRegistros = parseInt(countResult.rows[0].total);
+
+    // Calcular offset
+    const offset = (page - 1) * size;
+
+    // Consulta para obtener los datos paginados
+    const dataQuery = `
+      SELECT * FROM perfiles
+      ${whereClause}
+      ORDER BY ${campoOrden} ${direccionOrden}
+      LIMIT $${paramIndex} OFFSET $${paramIndex + 1}
+    `;
+    
+    const dataResult = await pool.query(dataQuery, [...valores, size, offset]);
+
+    // Calcular metadata
+    const totalPaginas = Math.max(Math.ceil(totalRegistros / size), 1);
+
+    return {
+      items: dataResult.rows.map(row => new Perfil(row)),
+      page,
+      size,
+      totalRecords: totalRegistros,
+      totalPages: totalPaginas
+    };
+  }
+
+  /**
    * Crea un nuevo perfil
    */
   async create(perfil) {
@@ -82,6 +170,15 @@ class PerfilRepository {
     const query = 'SELECT EXISTS(SELECT 1 FROM perfiles WHERE email = $1)';
     const result = await pool.query(query, [email]);
     return result.rows[0].exists;
+  }
+
+  /**
+   * Elimina un perfil por empleadoId
+   */
+  async deleteByEmpleadoId(empleadoId) {
+    const query = 'DELETE FROM perfiles WHERE empleado_id = $1 RETURNING *';
+    const result = await pool.query(query, [empleadoId]);
+    return result.rows.length > 0 ? new Perfil(result.rows[0]) : null;
   }
 }
 
