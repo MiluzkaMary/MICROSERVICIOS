@@ -1,0 +1,14 @@
+# ==========================================
+# Configuración del Sistema - Express Gateway
+# ==========================================
+# Modo emulado: usa almacenamiento en memoria
+# en lugar de Redis (no necesitamos credential management)
+db:
+  redis:
+    emulate: true
+    namespace: EG
+
+crypto:
+  cipherKey: 'sensitiveKey'
+  algorithm: aes256
+  saltRounds: 10

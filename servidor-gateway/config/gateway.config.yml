@@ -1,0 +1,148 @@
+http:
+  port: ${PORT:-8085}
+  hostname: 0.0.0.0
+admin:
+  port: 9876
+  host: localhost
+
+# ==========================================
+# API Endpoints - Rutas expuestas al exterior
+# ==========================================
+apiEndpoints:
+  # Auth: rutas públicas (login, recuperación de contraseña)
+  authApi:
+    host: '*'
+    paths:
+      - '/auth/*'
+      - '/auth'
+
+  # Empleados: rutas protegidas
+  empleadosApi:
+    host: '*'
+    paths:
+      - '/empleados/*'
+      - '/empleados'
+
+  # Departamentos: rutas protegidas
+  departamentosApi:
+    host: '*'
+    paths:
+      - '/departamentos/*'
+      - '/departamentos'
+
+  # Perfiles: rutas protegidas
+  perfilesApi:
+    host: '*'
+    paths:
+      - '/perfiles/*'
+      - '/perfiles'
+
+  # Notificaciones: rutas protegidas
+  notificacionesApi:
+    host: '*'
+    paths:
+      - '/notificaciones/*'
+      - '/notificaciones'
+
+# ==========================================
+# Service Endpoints - Microservicios internos
+# ==========================================
+serviceEndpoints:
+  authService:
+    url: 'http://auth-service:8084'
+  empleadosService:
+    url: 'http://empleados-service:8080'
+  departamentosService:
+    url: 'http://departamentos-service:8081'
+  perfilesService:
+    url: 'http://perfiles-service:8082'
+  notificacionesService:
+    url: 'http://notificaciones-service:8083'
+
+# ==========================================
+# Políticas habilitadas
+# ==========================================
+policies:
+  - jwt
+  - proxy
+
+# ==========================================
+# Pipelines - Flujo de procesamiento
+# ==========================================
+pipelines:
+  # ----------------------------------------
+  # Auth Pipeline: SIN validación JWT
+  # Permite acceso público a login, recover y reset
+  # ----------------------------------------
+  authPipeline:
+    apiEndpoints:
+      - authApi
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: authService
+              changeOrigin: true
+
+  # ----------------------------------------
+  # Empleados Pipeline: CON validación JWT
+  # ----------------------------------------
+  empleadosPipeline:
+    apiEndpoints:
+      - empleadosApi
+    policies:
+      - jwt:
+          - action:
+              secretOrPublicKey: ${JWT_SECRET}
+              checkCredentialExistence: false
+      - proxy:
+          - action:
+              serviceEndpoint: empleadosService
+              changeOrigin: true
+
+  # ----------------------------------------
+  # Departamentos Pipeline: CON validación JWT
+  # ----------------------------------------
+  departamentosPipeline:
+    apiEndpoints:
+      - departamentosApi
+    policies:
+      - jwt:
+          - action:
+              secretOrPublicKey: ${JWT_SECRET}
+              checkCredentialExistence: false
+      - proxy:
+          - action:
+              serviceEndpoint: departamentosService
+              changeOrigin: true
+
+  # ----------------------------------------
+  # Perfiles Pipeline: CON validación JWT
+  # ----------------------------------------
+  perfilesPipeline:
+    apiEndpoints:
+      - perfilesApi
+    policies:
+      - jwt:
+          - action:
+              secretOrPublicKey: ${JWT_SECRET}
+              checkCredentialExistence: false
+      - proxy:
+          - action:
+              serviceEndpoint: perfilesService
+              changeOrigin: true
+
+  # ----------------------------------------
+  # Notificaciones Pipeline: CON validación JWT
+  # ----------------------------------------
+  notificacionesPipeline:
+    apiEndpoints:
+      - notificacionesApi
+    policies:
+      - jwt:
+          - action:
+              secretOrPublicKey: ${JWT_SECRET}
+              checkCredentialExistence: false
+      - proxy:
+          - action:
+              serviceEndpoint: notificacionesService
+              changeOrigin: true

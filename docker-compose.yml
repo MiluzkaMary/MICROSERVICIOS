@@ -300,6 +300,29 @@ services:
     networks:
       - microservicios-network
 
+  # Express Gateway - API Gateway
+  # Punto de entrada para todas las peticiones externas
+  # Valida JWT en rutas protegidas antes de hacer proxy a los microservicios
+  gateway-service:
+    build:
+      context: ./servidor-gateway
+      dockerfile: Dockerfile
+    container_name: gateway-app
+    restart: unless-stopped
+    environment:
+      - PORT=8085
+      - JWT_SECRET=${JWT_SECRET}
+    ports:
+      - "8085:8085"
+    depends_on:
+      - auth-service
+      - empleados-service
+      - departamentos-service
+      - perfiles-service
+      - notificaciones-service
+    networks:
+      - microservicios-network
+
 networks:
   microservicios-network:
     driver: bridge
