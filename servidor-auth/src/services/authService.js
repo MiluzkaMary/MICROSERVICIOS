@@ -4,12 +4,11 @@
  */
 const bcrypt = require('bcryptjs');
 const jwt = require('jsonwebtoken');
-const crypto = require('crypto');
 const usuarioRepository = require('../repositories/usuarioRepository');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret-key-cambiar-en-produccion';
 const JWT_EXPIRATION = process.env.JWT_EXPIRATION || '24h';
-const TOKEN_RECOVERY_EXPIRATION_HOURS = 1;
+const RESET_TOKEN_EXPIRATION_SECONDS = 3600; // 1 hora
 
 class AuthService {
   /**
@@ -77,20 +76,21 @@ class AuthService {
       throw { status: 403, message: 'Usuario inactivo' };
     }
 
-    // Generar token de recuperación (UUID v4 simple)
-    const token = crypto.randomUUID();
-    const expiracion = new Date();
-    expiracion.setHours(expiracion.getHours() + TOKEN_RECOVERY_EXPIRATION_HOURS);
-
-    // Guardar token en BD
-    await usuarioRepository.establecerTokenRecuperacion(
-      usuario.empleadoId,
-      token,
-      expiracion
+    // Generar JWT stateless de recuperación
+    const now = Math.floor(Date.now() / 1000);
+    const token = jwt.sign(
+      {
+        sub: usuario.empleadoId,
+        type: 'RESET_PASSWORD',
+        iat: now,
+        exp: now + RESET_TOKEN_EXPIRATION_SECONDS
+      },
+      JWT_SECRET
     );
 
+    const expiracion = new Date((now + RESET_TOKEN_EXPIRATION_SECONDS) * 1000);
+
     // Publicar evento para que notificaciones envíe el email
-    // DECISIÓN MÍNIMA PROPUESTA: Usar RabbitMQ para desacoplar envío de emails
     const rabbitmq = require('../config/rabbitmq');
     await rabbitmq.publish('usuario.recuperacion', {
       empleadoId: usuario.empleadoId,
@@ -107,21 +107,30 @@ class AuthService {
   }
 
   /**
-   * Establecer nueva contraseña con token
-   * @param {string} token
+   * Establecer nueva contraseña con token JWT stateless
+   * @param {string} token - JWT con type: 'RESET_PASSWORD'
    * @param {string} nuevaPassword
    * @returns {object} { mensaje, empleadoId }
    */
   async resetPassword(token, nuevaPassword) {
-    // Buscar usuario por token
-    const usuario = await usuarioRepository.buscarPorToken(token);
-    
-    if (!usuario) {
+    // Verificar y decodificar el JWT de recuperación
+    let payload;
+    try {
+      payload = jwt.verify(token, JWT_SECRET);
+    } catch (error) {
       throw { status: 404, message: 'Token inválido o expirado' };
     }
 
-    if (!usuario.tokenRecuperacionValido()) {
-      throw { status: 400, message: 'Token expirado' };
+    // Validar que sea un token de tipo RESET_PASSWORD
+    if (payload.type !== 'RESET_PASSWORD') {
+      throw { status: 400, message: 'Tipo de token inválido' };
+    }
+
+    // Buscar usuario por empleadoId del token
+    const usuario = await usuarioRepository.buscarPorEmpleadoId(payload.sub);
+
+    if (!usuario) {
+      throw { status: 404, message: 'Usuario no encontrado' };
     }
 
     if (!usuario.activo) {
@@ -131,7 +140,7 @@ class AuthService {
     // Hashear nueva contraseña
     const passwordHash = await bcrypt.hash(nuevaPassword, 10);
 
-    // Actualizar contraseña y limpiar token
+    // Actualizar contraseña
     await usuarioRepository.establecerPassword(usuario.empleadoId, passwordHash);
 
     return {
@@ -142,7 +151,7 @@ class AuthService {
 
   /**
    * Manejar evento empleado.creado
-   * Crea usuario inactivo con token de activación
+   * Crea usuario y genera JWT de activación
    */
   async handleEmpleadoCreado(empleadoData, channel, exchange) {
     try {
@@ -159,16 +168,19 @@ class AuthService {
       const usuario = await usuarioRepository.crear(empleadoId, email, 'USER');
       console.log(`✅ Usuario creado: ${usuario.empleadoId}`);
 
-      // Generar token de activación
-      const token = crypto.randomUUID();
-      const expiracion = new Date();
-      expiracion.setHours(expiracion.getHours() + TOKEN_RECOVERY_EXPIRATION_HOURS);
-
-      await usuarioRepository.establecerTokenRecuperacion(
-        usuario.empleadoId,
-        token,
-        expiracion
+      // Generar JWT stateless de activación (mismo formato que recuperación)
+      const now = Math.floor(Date.now() / 1000);
+      const token = jwt.sign(
+        {
+          sub: usuario.empleadoId,
+          type: 'RESET_PASSWORD',
+          iat: now,
+          exp: now + RESET_TOKEN_EXPIRATION_SECONDS
+        },
+        JWT_SECRET
       );
+
+      const expiracion = new Date((now + RESET_TOKEN_EXPIRATION_SECONDS) * 1000);
 
       // Publicar evento usuario.creado con token
       const rabbitmq = require('../config/rabbitmq');

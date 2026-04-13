@@ -20,11 +20,12 @@ function esPasswordValida(password) {
 }
 
 /**
- * Validar token (formato UUID)
+ * Validar token (formato JWT: header.payload.signature)
  */
 function esTokenValido(token) {
-  const regex = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-  return regex.test(token);
+  if (!token || typeof token !== 'string') return false;
+  const parts = token.split('.');
+  return parts.length === 3 && parts.every(part => part.length > 0);
 }
 
 /**
