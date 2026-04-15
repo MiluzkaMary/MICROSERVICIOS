@@ -9,6 +9,7 @@ class Empleado {
     this.email = (data.email || "").trim().toLowerCase();
     this.departamentoId = data.departamentoId !== undefined ? String(data.departamentoId).trim() : "";
     this.fechaIngreso = data.fechaIngreso || null;
+    this.activo = data.activo !== undefined ? Boolean(data.activo) : true;
   }
 
   /**
@@ -20,7 +21,8 @@ class Empleado {
       nombre: this.nombre,
       email: this.email,
       departamentoId: this.departamentoId,
-      fechaIngreso: this.fechaIngreso
+      fechaIngreso: this.fechaIngreso,
+      activo: this.activo
     };
   }
 }

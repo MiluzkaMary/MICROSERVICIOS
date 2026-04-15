@@ -6,9 +6,11 @@ CREATE TABLE IF NOT EXISTS empleados (
     email VARCHAR(150) NOT NULL UNIQUE,
     departamento_id VARCHAR(50) NOT NULL,
     fecha_ingreso DATE NOT NULL,
+    activo BOOLEAN NOT NULL DEFAULT true,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE INDEX IF NOT EXISTS idx_empleados_email ON empleados(email);
 CREATE INDEX IF NOT EXISTS idx_empleados_departamento_id ON empleados(departamento_id);
+CREATE INDEX IF NOT EXISTS idx_empleados_activo ON empleados(activo);

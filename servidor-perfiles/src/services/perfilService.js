@@ -172,15 +172,15 @@ class PerfilService {
   }
 
   /**
-   * Elimina un perfil por empleadoId
+    * Desactiva un perfil por empleadoId
    * Este método será llamado cuando se reciba el evento empleado.eliminado
    */
-  async eliminarPerfilPorEmpleadoId(empleadoId) {
+    async desactivarPerfilPorEmpleadoId(empleadoId) {
     try {
       // Verificar que el perfil existe
-      const perfilExiste = await perfilRepository.existsByEmpleadoId(empleadoId);
+      const perfil = await perfilRepository.findByEmpleadoId(empleadoId);
 
-      if (!perfilExiste) {
+      if (!perfil) {
         console.warn(`No existe un perfil para el empleado ${empleadoId}`);
         return {
           success: false,
@@ -190,32 +190,85 @@ class PerfilService {
         };
       }
 
-      // Eliminar perfil
-      const perfilEliminado = await perfilRepository.deleteByEmpleadoId(empleadoId);
-
-      if (!perfilEliminado) {
+      if (!perfil.activo) {
         return {
-          success: false,
-          statusCode: 404,
-          message: `No se pudo eliminar el perfil del empleado ${empleadoId}`,
-          errors: ['Error al eliminar perfil']
+          success: true,
+          statusCode: 200,
+          message: `El perfil del empleado ${empleadoId} ya estaba desactivado`,
+          data: perfil
         };
       }
 
-      console.log(`✅ Perfil eliminado automáticamente para empleado ${empleadoId}`);
+      // Desactivar perfil
+      const perfilDesactivado = await perfilRepository.desactivarByEmpleadoId(empleadoId);
+
+      if (!perfilDesactivado) {
+        return {
+          success: false,
+          statusCode: 404,
+          message: `No se pudo desactivar el perfil del empleado ${empleadoId}`,
+          errors: ['Error al desactivar perfil']
+        };
+      }
+
+      console.log(`✅ Perfil desactivado automáticamente para empleado ${empleadoId}`);
 
       return {
         success: true,
         statusCode: 200,
-        message: `Perfil del empleado ${empleadoId} eliminado exitosamente`,
-        data: perfilEliminado
+        message: `Perfil del empleado ${empleadoId} desactivado exitosamente`,
+        data: perfilDesactivado
       };
     } catch (error) {
-      console.error('Error al eliminar perfil:', error);
+      console.error('Error al desactivar perfil:', error);
       return {
         success: false,
         statusCode: 500,
-        message: 'Error interno al eliminar el perfil'
+        message: 'Error interno al desactivar el perfil'
+      };
+    }
+  }
+
+  /**
+   * Reactiva un perfil por empleadoId
+   */
+  async reactivarPerfilPorEmpleadoId(empleadoId) {
+    try {
+      const perfil = await perfilRepository.findByEmpleadoId(empleadoId);
+
+      if (!perfil) {
+        console.warn(`No existe un perfil para reactivar del empleado ${empleadoId}`);
+        return {
+          success: false,
+          statusCode: 404,
+          message: `No existe un perfil para el empleado ${empleadoId}`,
+          errors: ['Perfil no encontrado']
+        };
+      }
+
+      if (perfil.activo) {
+        return {
+          success: true,
+          statusCode: 200,
+          message: `El perfil del empleado ${empleadoId} ya estaba activo`,
+          data: perfil
+        };
+      }
+
+      const perfilReactivado = await perfilRepository.reactivarByEmpleadoId(empleadoId);
+
+      return {
+        success: true,
+        statusCode: 200,
+        message: `Perfil del empleado ${empleadoId} reactivado exitosamente`,
+        data: perfilReactivado
+      };
+    } catch (error) {
+      console.error('Error al reactivar perfil:', error);
+      return {
+        success: false,
+        statusCode: 500,
+        message: 'Error interno al reactivar el perfil'
       };
     }
   }

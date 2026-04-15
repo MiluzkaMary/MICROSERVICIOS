@@ -93,6 +93,11 @@ Microservicio para la gestión de empleados.
               format: 'date',
               description: 'Fecha de ingreso del empleado',
               example: '2024-01-15'
+            },
+            activo: {
+              type: 'boolean',
+              description: 'Indica si el empleado se encuentra activo en la empresa',
+              example: true
             }
           }
         },

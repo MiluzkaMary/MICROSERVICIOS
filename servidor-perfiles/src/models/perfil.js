@@ -12,6 +12,7 @@ class Perfil {
     this.direccion = (data.direccion || "").trim();
     this.ciudad = (data.ciudad || "").trim();
     this.biografia = (data.biografia || "").trim();
+    this.activo = data.activo !== undefined ? Boolean(data.activo) : true;
     this.fechaCreacion = data.fecha_creacion || data.fechaCreacion;
     this.fechaActualizacion = data.fecha_actualizacion || data.fechaActualizacion;
   }
@@ -29,6 +30,7 @@ class Perfil {
       direccion: this.direccion,
       ciudad: this.ciudad,
       biografia: this.biografia,
+      activo: this.activo,
       fechaCreacion: this.fechaCreacion,
       fechaActualizacion: this.fechaActualizacion
     };

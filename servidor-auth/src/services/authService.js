@@ -7,7 +7,7 @@ const jwt = require('jsonwebtoken');
 const usuarioRepository = require('../repositories/usuarioRepository');
 
 const JWT_SECRET = process.env.JWT_SECRET || 'secret-key-cambiar-en-produccion';
-const JWT_EXPIRATION = process.env.JWT_EXPIRATION || '24h';
+const JWT_EXPIRATION = process.env.JWT_EXPIRATION || process.env.JWT_EXPIRES_IN || '24h';
 const RESET_TOKEN_EXPIRATION_SECONDS = 3600; // 1 hora
 
 class AuthService {
@@ -44,11 +44,10 @@ class AuthService {
     const token = jwt.sign(
       {
         sub: usuario.empleadoId,
-        role: usuario.role,
-        iat: Math.floor(Date.now() / 1000),
-        exp: Math.floor(Date.now() / 1000) + 24 * 60 * 60 // 24 horas
+        role: usuario.role
       },
-      JWT_SECRET
+      JWT_SECRET,
+      { expiresIn: JWT_EXPIRATION }
     );
 
     // Actualizar último acceso
@@ -223,6 +222,35 @@ class AuthService {
       console.log(`✅ Usuario ${empleadoId} inhabilitado`);
     } catch (error) {
       console.error('❌ Error en handleEmpleadoEliminado:', error);
+      throw error;
+    }
+  }
+
+  /**
+   * Manejar evento empleado.reactivado
+   * Reactiva usuario y conserva credenciales
+   */
+  async handleEmpleadoReactivado(empleadoData) {
+    try {
+      const empleadoId = empleadoData.empleadoId || empleadoData.id;
+      const email = empleadoData.email || null;
+
+      if (!empleadoId) {
+        console.warn('⚠️ Evento empleado.reactivado sin empleadoId válido', empleadoData);
+        return;
+      }
+
+      const usuarioExistente = await usuarioRepository.buscarPorEmpleadoId(empleadoId);
+      if (!usuarioExistente) {
+        const usuarioCreado = await usuarioRepository.crear(empleadoId, email || '', 'USER');
+        console.log(`✅ Usuario ${usuarioCreado.empleadoId} creado al reactivar empleado`);
+        return;
+      }
+
+      const usuarioReactivado = await usuarioRepository.reactivar(empleadoId, email);
+      console.log(`✅ Usuario ${usuarioReactivado.empleadoId} reactivado`);
+    } catch (error) {
+      console.error('❌ Error en handleEmpleadoReactivado:', error);
       throw error;
     }
   }

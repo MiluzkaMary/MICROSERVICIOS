@@ -1,0 +1,16 @@
+{
+  "name": "e2e-tests",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Suite BDD para pruebas funcionales del sistema de microservicios",
+  "scripts": {
+    "test": "cucumber-js",
+    "test:tags": "cucumber-js --tags"
+  },
+  "dependencies": {
+    "@cucumber/cucumber": "^10.9.0",
+    "axios": "^1.7.9",
+    "dotenv": "^16.4.7",
+    "uuid": "^9.0.1"
+  }
+}

@@ -179,6 +179,7 @@ class NotificacionRepository {
         COUNT(*) as total,
         COUNT(CASE WHEN tipo = 'BIENVENIDA' THEN 1 END) as bienvenidas,
         COUNT(CASE WHEN tipo = 'DESVINCULACION' THEN 1 END) as desvinculaciones,
+        COUNT(CASE WHEN tipo = 'ACTIVACION' THEN 1 END) as activaciones,
         COUNT(CASE WHEN estado = 'ENVIADA' THEN 1 END) as enviadas,
         COUNT(CASE WHEN estado = 'FALLIDA' THEN 1 END) as fallidas,
         COUNT(CASE WHEN estado = 'PENDIENTE' THEN 1 END) as pendientes

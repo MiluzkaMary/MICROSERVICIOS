@@ -114,12 +114,31 @@ Equipo de Recursos Humanos`;
     const mensajeMotivo = motivo ? `\nMotivo: ${motivo}\n` : '';
     const mensaje = `Estimado/a ${nombre},
 
-Lamentamos informarte que tu relación laboral con la empresa ha finalizado.
+Lamentamos informarte que tu relación laboral con la empresa ha sido desactivada.
 ${mensajeMotivo}
-Tu ID de empleado ${empleadoId} quedará inactivo.
+Tu ID de empleado ${empleadoId} quedará inactivo temporalmente.
 
 Te deseamos lo mejor en tus futuros proyectos.
 
+Equipo de Recursos Humanos`;
+
+    return await this.enviarEmail(email, asunto, mensaje);
+  }
+
+  /**
+   * Envía correo de vinculación tras reactivación
+   */
+  async enviarVinculacion(nombre, email, empleadoId) {
+    const asunto = 'Tu relación laboral ha sido reactivada';
+    const mensaje = `Hola ${nombre || empleadoId},
+
+Tu cuenta y tu perfil han sido reactivados correctamente.
+
+Tu ID de empleado sigue siendo: ${empleadoId}
+
+Ya puedes volver a usar tus credenciales habituales para acceder al sistema.
+
+Saludos,
 Equipo de Recursos Humanos`;
 
     return await this.enviarEmail(email, asunto, mensaje);

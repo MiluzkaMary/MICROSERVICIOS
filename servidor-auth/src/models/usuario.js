@@ -10,8 +10,6 @@ class Usuario {
     this.passwordHash = data.password_hash;
     this.role = data.role; // ADMIN o USER
     this.activo = data.activo;
-    this.tokenRecuperacion = data.token_recuperacion;
-    this.tokenExpiracion = data.token_expiracion;
     this.createdAt = data.created_at;
     this.updatedAt = data.updated_at;
   }
@@ -28,16 +26,6 @@ class Usuario {
    */
   puedeIniciarSesion() {
     return this.activo && this.tienePassword();
-  }
-
-  /**
-   * Verifica si el token de recuperación es válido
-   */
-  tokenRecuperacionValido() {
-    if (!this.tokenRecuperacion || !this.tokenExpiracion) {
-      return false;
-    }
-    return new Date() < new Date(this.tokenExpiracion);
   }
 
   /**

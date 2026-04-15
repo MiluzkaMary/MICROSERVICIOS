@@ -9,13 +9,18 @@ CREATE TABLE IF NOT EXISTS perfiles (
     direccion VARCHAR(255) DEFAULT '',
     ciudad VARCHAR(100) DEFAULT '',
     biografia TEXT DEFAULT '',
+    activo BOOLEAN NOT NULL DEFAULT true,
     fecha_creacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     fecha_actualizacion TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
+ALTER TABLE perfiles
+ADD COLUMN IF NOT EXISTS activo BOOLEAN NOT NULL DEFAULT true;
+
 -- Índices para optimizar consultas
 CREATE INDEX IF NOT EXISTS idx_perfiles_empleado_id ON perfiles(empleado_id);
 CREATE INDEX IF NOT EXISTS idx_perfiles_email ON perfiles(email);
+CREATE INDEX IF NOT EXISTS idx_perfiles_activo ON perfiles(activo);
 
 -- Trigger para actualizar fecha_actualizacion automáticamente
 CREATE OR REPLACE FUNCTION update_fecha_actualizacion()

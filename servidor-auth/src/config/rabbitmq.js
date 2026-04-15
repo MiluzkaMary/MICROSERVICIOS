@@ -15,6 +15,7 @@ const RABBITMQ_CONFIG = {
 const EXCHANGE = 'empleados_events'; // Reutilizamos el exchange existente
 const QUEUE_EMPLEADO_CREADO = 'auth.empleado_creado';
 const QUEUE_EMPLEADO_ELIMINADO = 'auth.empleado_eliminado';
+const QUEUE_EMPLEADO_REACTIVADO = 'auth.empleado_reactivado';
 
 let connection = null;
 let channel = null;
@@ -50,7 +51,7 @@ async function connect() {
           channel.ack(msg);
         } catch (error) {
           console.error('❌ Error procesando empleado.creado:', error);
-          channel.nack(msg, false, false); // No reintenta, descarta
+          channel.nack(msg, false, true); // Reencola para reintentar
         }
       }
     });
@@ -70,12 +71,32 @@ async function connect() {
           channel.ack(msg);
         } catch (error) {
           console.error('❌ Error procesando empleado.eliminado:', error);
-          channel.nack(msg, false, false);
+          channel.nack(msg, false, true);
         }
       }
     });
 
-    console.log('👂 Escuchando eventos: empleado.creado, empleado.eliminado');
+    // Configurar consumer para empleado.reactivado
+    await channel.assertQueue(QUEUE_EMPLEADO_REACTIVADO, { durable: true });
+    await channel.bindQueue(QUEUE_EMPLEADO_REACTIVADO, EXCHANGE, 'empleado.reactivado');
+
+    channel.consume(QUEUE_EMPLEADO_REACTIVADO, async (msg) => {
+      if (msg !== null) {
+        try {
+          const empleadoData = JSON.parse(msg.content.toString());
+          console.log('📥 Evento recibido: empleado.reactivado', empleadoData);
+
+          await authService.handleEmpleadoReactivado(empleadoData);
+
+          channel.ack(msg);
+        } catch (error) {
+          console.error('❌ Error procesando empleado.reactivado:', error);
+          channel.nack(msg, false, true);
+        }
+      }
+    });
+
+    console.log('👂 Escuchando eventos: empleado.creado, empleado.eliminado, empleado.reactivado');
 
   } catch (error) {
     console.error('❌ Error conectando a RabbitMQ:', error.message);

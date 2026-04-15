@@ -17,10 +17,12 @@ const RABBITMQ_CONFIG = {
 const EXCHANGE_NAME = 'empleados_events';
 const QUEUE_CREADO = 'notificaciones.empleado_creado';
 const QUEUE_ELIMINADO = 'notificaciones.empleado_eliminado';
+const QUEUE_REACTIVADO = 'notificaciones.empleado_reactivado';
 const QUEUE_USUARIO_CREADO = 'notificaciones.usuario_creado';
 const QUEUE_USUARIO_RECUPERACION = 'notificaciones.usuario_recuperacion';
 const ROUTING_KEY_CREADO = 'empleado.creado';
 const ROUTING_KEY_ELIMINADO = 'empleado.eliminado';
+const ROUTING_KEY_REACTIVADO = 'empleado.reactivado';
 const ROUTING_KEY_USUARIO_CREADO = 'usuario.creado';
 const ROUTING_KEY_USUARIO_RECUPERACION = 'usuario.recuperacion';
 
@@ -43,12 +45,14 @@ async function connect(retries = 5, delay = 3000) {
     // Declarar colas
     await channel.assertQueue(QUEUE_CREADO, { durable: true });
     await channel.assertQueue(QUEUE_ELIMINADO, { durable: true });
+    await channel.assertQueue(QUEUE_REACTIVADO, { durable: true });
     await channel.assertQueue(QUEUE_USUARIO_CREADO, { durable: true });
     await channel.assertQueue(QUEUE_USUARIO_RECUPERACION, { durable: true });
 
     // Vincular colas al exchange
     await channel.bindQueue(QUEUE_CREADO, EXCHANGE_NAME, ROUTING_KEY_CREADO);
     await channel.bindQueue(QUEUE_ELIMINADO, EXCHANGE_NAME, ROUTING_KEY_ELIMINADO);
+    await channel.bindQueue(QUEUE_REACTIVADO, EXCHANGE_NAME, ROUTING_KEY_REACTIVADO);
     await channel.bindQueue(QUEUE_USUARIO_CREADO, EXCHANGE_NAME, ROUTING_KEY_USUARIO_CREADO);
     await channel.bindQueue(QUEUE_USUARIO_RECUPERACION, EXCHANGE_NAME, ROUTING_KEY_USUARIO_RECUPERACION);
 
@@ -56,7 +60,7 @@ async function connect(retries = 5, delay = 3000) {
     await channel.prefetch(1);
 
     console.log('✅ Conectado a RabbitMQ');
-    console.log(`🎯 Escuchando eventos: ${ROUTING_KEY_CREADO}, ${ROUTING_KEY_ELIMINADO}, ${ROUTING_KEY_USUARIO_CREADO}, ${ROUTING_KEY_USUARIO_RECUPERACION}`);
+    console.log(`🎯 Escuchando eventos: ${ROUTING_KEY_CREADO}, ${ROUTING_KEY_ELIMINADO}, ${ROUTING_KEY_REACTIVADO}, ${ROUTING_KEY_USUARIO_CREADO}, ${ROUTING_KEY_USUARIO_RECUPERACION}`);
 
     // Consumir eventos de empleado.creado
     channel.consume(QUEUE_CREADO, async (mensaje) => {
@@ -74,7 +78,7 @@ async function connect(retries = 5, delay = 3000) {
         } catch (error) {
           console.error('❌ Error al procesar mensaje empleado.creado:', error.message);
           // Rechazar mensaje
-          channel.nack(mensaje, false, false);
+          channel.nack(mensaje, false, true);
         }
       }
     });
@@ -95,7 +99,28 @@ async function connect(retries = 5, delay = 3000) {
         } catch (error) {
           console.error('❌ Error al procesar mensaje empleado.eliminado:', error.message);
           // Rechazar mensaje
-          channel.nack(mensaje, false, false);
+          channel.nack(mensaje, false, true);
+        }
+      }
+    });
+
+    // Consumir eventos de empleado.reactivado
+    channel.consume(QUEUE_REACTIVADO, async (mensaje) => {
+      if (mensaje !== null) {
+        try {
+          const contenido = JSON.parse(mensaje.content.toString());
+          console.log(`📨 Evento recibido: ${ROUTING_KEY_REACTIVADO}`, contenido);
+
+          // Procesar evento
+          await procesarEmpleadoReactivado(contenido);
+
+          // Confirmar mensaje
+          channel.ack(mensaje);
+          console.log('✅ Mensaje procesado exitosamente');
+        } catch (error) {
+          console.error('❌ Error al procesar mensaje empleado.reactivado:', error.message);
+          // Rechazar mensaje
+          channel.nack(mensaje, false, true);
         }
       }
     });
@@ -116,7 +141,7 @@ async function connect(retries = 5, delay = 3000) {
         } catch (error) {
           console.error('❌ Error al procesar mensaje usuario.creado:', error.message);
           // Rechazar mensaje
-          channel.nack(mensaje, false, false);
+          channel.nack(mensaje, false, true);
         }
       }
     });
@@ -137,7 +162,7 @@ async function connect(retries = 5, delay = 3000) {
         } catch (error) {
           console.error('❌ Error al procesar mensaje usuario.recuperacion:', error.message);
           // Rechazar mensaje
-          channel.nack(mensaje, false, false);
+          channel.nack(mensaje, false, true);
         }
       }
     });
@@ -216,6 +241,24 @@ async function procesarEmpleadoEliminado(evento) {
     console.log(`✅ Notificación de desvinculación procesada para ${nombre}`);
   } else {
     console.error(`❌ Error al procesar notificación para ${nombre}:`, resultado.message);
+    throw new Error(resultado.message);
+  }
+}
+
+/**
+ * Procesa el evento empleado.reactivado
+ */
+async function procesarEmpleadoReactivado(evento) {
+  const { empleadoId, nombre, email } = evento;
+
+  console.log(`📧 Procesando email de vinculación para: ${empleadoId} - ${nombre}`);
+
+  const resultado = await notificacionService.procesarEmpleadoReactivado(empleadoId, nombre, email);
+
+  if (resultado.success) {
+    console.log(`✅ Notificación de vinculación procesada para ${nombre}`);
+  } else {
+    console.error(`❌ Error al procesar notificación de vinculación para ${nombre}:`, resultado.message);
     throw new Error(resultado.message);
   }
 }

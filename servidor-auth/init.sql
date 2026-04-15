@@ -6,8 +6,6 @@ CREATE TABLE IF NOT EXISTS usuarios (
     password_hash VARCHAR(255),  -- NULL cuando aún no ha establecido contraseña
     role VARCHAR(20) NOT NULL DEFAULT 'USER', -- ADMIN o USER
     activo BOOLEAN NOT NULL DEFAULT true,
-    token_recuperacion VARCHAR(255),
-    token_expiracion TIMESTAMP,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
@@ -15,7 +13,6 @@ CREATE TABLE IF NOT EXISTS usuarios (
 -- Índices para mejorar consultas
 CREATE INDEX IF NOT EXISTS idx_usuarios_email ON usuarios(email);
 CREATE INDEX IF NOT EXISTS idx_usuarios_empleado_id ON usuarios(empleado_id);
-CREATE INDEX IF NOT EXISTS idx_usuarios_token ON usuarios(token_recuperacion);
 
 -- Trigger para actualizar updated_at automáticamente
 CREATE OR REPLACE FUNCTION actualizar_fecha_modificacion()

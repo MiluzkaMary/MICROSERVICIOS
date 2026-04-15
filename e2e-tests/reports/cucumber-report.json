@@ -1,0 +1,1388 @@
+[
+  {
+    "description": "  Como equipo de desarrollo\n  Quiero una verificacion rapida del sistema expuesto por el gateway\n  Para detectar roturas basicas de integracion.",
+    "elements": [
+      {
+        "description": "",
+        "id": "sistema;el-gateway-rechaza-un-login-invalido-de-forma-controlada",
+        "keyword": "Escenario",
+        "line": 7,
+        "name": "El gateway rechaza un login invalido de forma controlada",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 10291292
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 8,
+            "name": "intento iniciar sesion por el gateway con credenciales invalidas",
+            "match": {
+              "location": "step_definitions/sistema.steps.js:3"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 482774021
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 9,
+            "name": "la respuesta debe tener codigo 401",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:95"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 1179689
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 1144136
+            }
+          }
+        ],
+        "tags": [],
+        "type": "scenario"
+      },
+      {
+        "description": "",
+        "id": "sistema;un-administrador-puede-consultar-empleados-a-traves-del-gateway",
+        "keyword": "Escenario",
+        "line": 12,
+        "name": "Un administrador puede consultar empleados a traves del gateway",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 166086
+            }
+          },
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 361414327
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 13,
+            "name": "consulto la lista de empleados",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:14"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 267510336
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 14,
+            "name": "la respuesta debe tener codigo 201",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:95"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 351742
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 392764
+            }
+          }
+        ],
+        "tags": [
+          {
+            "name": "@necesita-admin",
+            "line": 11
+          }
+        ],
+        "type": "scenario"
+      }
+    ],
+    "id": "sistema",
+    "line": 2,
+    "keyword": "Característica",
+    "name": "Sistema",
+    "tags": [],
+    "uri": "features/01_sistema.feature"
+  },
+  {
+    "description": "  Como usuario del sistema\n  Quiero que las rutas protegidas respeten JWT y roles\n  Para garantizar control de acceso consistente.",
+    "elements": [
+      {
+        "description": "",
+        "id": "seguridad;acceso-denegado-sin-token",
+        "keyword": "Escenario",
+        "line": 7,
+        "name": "Acceso denegado sin token",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 299224
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 8,
+            "name": "consulto la lista de empleados sin token",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:4"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 32160484
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 9,
+            "name": "la respuesta debe tener codigo 401",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:95"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 1784253
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 1386927
+            }
+          }
+        ],
+        "tags": [],
+        "type": "scenario"
+      },
+      {
+        "description": "",
+        "id": "seguridad;acceso-denegado-con-token-invalido",
+        "keyword": "Escenario",
+        "line": 11,
+        "name": "Acceso denegado con token invalido",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 278524
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 12,
+            "name": "uso un token invalido para consultar empleados",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:26"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 35619823
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 13,
+            "name": "la respuesta debe tener codigo 401",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:95"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 770855
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 391001
+            }
+          }
+        ],
+        "tags": [],
+        "type": "scenario"
+      },
+      {
+        "description": "",
+        "id": "seguridad;un-usuario-user-no-puede-crear-un-empleado",
+        "keyword": "Escenario",
+        "line": 16,
+        "name": "Un usuario USER no puede crear un empleado",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 182640
+            }
+          },
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 365028231
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 17,
+            "name": "intento crear un empleado con rol USER",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:38"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 102958674
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 18,
+            "name": "la respuesta debe tener codigo 403",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:95"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 618002
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 660507
+            }
+          }
+        ],
+        "tags": [
+          {
+            "name": "@necesita-user",
+            "line": 15
+          }
+        ],
+        "type": "scenario"
+      },
+      {
+        "description": "",
+        "id": "seguridad;un-usuario-user-no-puede-eliminar-un-empleado",
+        "keyword": "Escenario",
+        "line": 21,
+        "name": "Un usuario USER no puede eliminar un empleado",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 743986
+            }
+          },
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 243345687
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 22,
+            "name": "intento eliminar un empleado con rol USER",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:58"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 39473977
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 23,
+            "name": "la respuesta debe tener codigo 403",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:95"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 453748
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 218562
+            }
+          }
+        ],
+        "tags": [
+          {
+            "name": "@necesita-user",
+            "line": 20
+          }
+        ],
+        "type": "scenario"
+      },
+      {
+        "description": "",
+        "id": "seguridad;un-usuario-admin-puede-crear-un-departamento-exitosamente",
+        "keyword": "Escenario",
+        "line": 26,
+        "name": "Un usuario ADMIN puede crear un departamento exitosamente",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 147168
+            }
+          },
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 231550513
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 27,
+            "name": "creo un departamento de prueba",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:70"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 260833747
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 28,
+            "name": "la respuesta debe tener codigo 201",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:95"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 339757
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 384088
+            }
+          }
+        ],
+        "tags": [
+          {
+            "name": "@necesita-admin",
+            "line": 25
+          }
+        ],
+        "type": "scenario"
+      },
+      {
+        "description": "",
+        "id": "seguridad;un-usuario-admin-puede-listar-empleados",
+        "keyword": "Escenario",
+        "line": 31,
+        "name": "Un usuario ADMIN puede listar empleados",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 251538
+            }
+          },
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 248452037
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 32,
+            "name": "consulto la lista de empleados",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:14"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 34602624
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 33,
+            "name": "la respuesta debe tener codigo 201",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:95"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 353915
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 276980
+            }
+          }
+        ],
+        "tags": [
+          {
+            "name": "@necesita-admin",
+            "line": 30
+          }
+        ],
+        "type": "scenario"
+      }
+    ],
+    "id": "seguridad",
+    "line": 2,
+    "keyword": "Característica",
+    "name": "Seguridad",
+    "tags": [],
+    "uri": "features/02_seguridad.feature"
+  },
+  {
+    "description": "  Como area de recursos humanos\n  Quiero automatizar el alta de empleados\n  Para validar el flujo completo de creacion, activacion y acceso.",
+    "elements": [
+      {
+        "description": "",
+        "id": "onboarding;registro-exitoso-con-verificacion-asincronica-de-credenciales",
+        "keyword": "Escenario",
+        "line": 8,
+        "name": "Registro exitoso con verificacion asincronica de credenciales",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 182659
+            }
+          },
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 256483935
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 9,
+            "name": "creo un empleado de onboarding",
+            "match": {
+              "location": "step_definitions/onboarding.steps.js:128"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 135589807
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 10,
+            "name": "eventualmente el servicio de auth debe tener un usuario para el empleado creado",
+            "match": {
+              "location": "step_definitions/onboarding.steps.js:177"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 143300160
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 185626
+            }
+          }
+        ],
+        "tags": [
+          {
+            "name": "@necesita-admin",
+            "line": 2
+          }
+        ],
+        "type": "scenario"
+      },
+      {
+        "description": "",
+        "id": "onboarding;registro-exitoso-con-verificacion-asincronica-de-notificacion",
+        "keyword": "Escenario",
+        "line": 12,
+        "name": "Registro exitoso con verificacion asincronica de notificacion",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 274505
+            }
+          },
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 195125237
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 13,
+            "name": "creo un empleado de onboarding",
+            "match": {
+              "location": "step_definitions/onboarding.steps.js:128"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 64719074
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 14,
+            "name": "eventualmente debe existir una notificacion para el empleado creado",
+            "match": {
+              "location": "step_definitions/onboarding.steps.js:189"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 37987719
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 136154
+            }
+          }
+        ],
+        "tags": [
+          {
+            "name": "@necesita-admin",
+            "line": 2
+          }
+        ],
+        "type": "scenario"
+      },
+      {
+        "description": "",
+        "id": "onboarding;el-nuevo-empleado-puede-hacer-login",
+        "keyword": "Escenario",
+        "line": 16,
+        "name": "El nuevo empleado puede hacer login",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 64550
+            }
+          },
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 169252981
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 17,
+            "name": "creo un empleado de onboarding",
+            "match": {
+              "location": "step_definitions/onboarding.steps.js:128"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 74333734
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Y ",
+            "line": 18,
+            "name": "eventualmente el servicio de auth debe tener un usuario para el empleado creado",
+            "match": {
+              "location": "step_definitions/onboarding.steps.js:177"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 24658028
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Y ",
+            "line": 19,
+            "name": "solicito la recuperacion de contraseña para el empleado creado",
+            "match": {
+              "location": "step_definitions/onboarding.steps.js:201"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 18407692
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Y ",
+            "line": 20,
+            "name": "eventualmente debo obtener el token de recuperacion del empleado creado",
+            "match": {
+              "location": "step_definitions/onboarding.steps.js:215"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 102326024
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Y ",
+            "line": 21,
+            "name": "restablezco la contraseña del empleado creado",
+            "match": {
+              "location": "step_definitions/onboarding.steps.js:235"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 178205180
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 22,
+            "name": "el empleado puede iniciar sesion correctamente",
+            "match": {
+              "location": "step_definitions/onboarding.steps.js:250"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 216428952
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 282332
+            }
+          }
+        ],
+        "tags": [
+          {
+            "name": "@necesita-admin",
+            "line": 2
+          }
+        ],
+        "type": "scenario"
+      },
+      {
+        "description": "",
+        "id": "onboarding;registro-con-departamento-inexistente",
+        "keyword": "Escenario",
+        "line": 24,
+        "name": "Registro con departamento inexistente",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 77266
+            }
+          },
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 175628800
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 25,
+            "name": "intento crear un empleado con departamento inexistente",
+            "match": {
+              "location": "step_definitions/onboarding.steps.js:136"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 27042276
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 26,
+            "name": "la respuesta debe tener codigo 400",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:95"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 233643
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 140864
+            }
+          }
+        ],
+        "tags": [
+          {
+            "name": "@necesita-admin",
+            "line": 2
+          }
+        ],
+        "type": "scenario"
+      },
+      {
+        "description": "",
+        "id": "onboarding;registro-con-campos-faltantes",
+        "keyword": "Esquema del escenario",
+        "line": 34,
+        "name": "Registro con campos faltantes",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 57555
+            }
+          },
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 171735417
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 29,
+            "name": "intento crear un empleado con nombre \"\", email \"test@empresa.com\", departamentoId \"1\" y fechaIngreso \"2026-01-01\"",
+            "match": {
+              "location": "step_definitions/onboarding.steps.js:156"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 20976935
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 30,
+            "name": "la respuesta debe tener codigo 400",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:95"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 212039
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 293373
+            }
+          }
+        ],
+        "tags": [
+          {
+            "name": "@necesita-admin",
+            "line": 2
+          }
+        ],
+        "type": "scenario"
+      },
+      {
+        "description": "",
+        "id": "onboarding;registro-con-campos-faltantes",
+        "keyword": "Esquema del escenario",
+        "line": 35,
+        "name": "Registro con campos faltantes",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 93159
+            }
+          },
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 167270596
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 29,
+            "name": "intento crear un empleado con nombre \"Juan\", email \"\", departamentoId \"1\" y fechaIngreso \"2026-01-01\"",
+            "match": {
+              "location": "step_definitions/onboarding.steps.js:156"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 16615499
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 30,
+            "name": "la respuesta debe tener codigo 400",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:95"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 174444
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 133240
+            }
+          }
+        ],
+        "tags": [
+          {
+            "name": "@necesita-admin",
+            "line": 2
+          }
+        ],
+        "type": "scenario"
+      },
+      {
+        "description": "",
+        "id": "onboarding;registro-con-campos-faltantes",
+        "keyword": "Esquema del escenario",
+        "line": 36,
+        "name": "Registro con campos faltantes",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 63598
+            }
+          },
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 182568366
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 29,
+            "name": "intento crear un empleado con nombre \"Juan\", email \"test@empresa.com\", departamentoId \"\" y fechaIngreso \"2026-01-01\"",
+            "match": {
+              "location": "step_definitions/onboarding.steps.js:156"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 16478736
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 30,
+            "name": "la respuesta debe tener codigo 400",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:95"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 184101
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 148099
+            }
+          }
+        ],
+        "tags": [
+          {
+            "name": "@necesita-admin",
+            "line": 2
+          }
+        ],
+        "type": "scenario"
+      },
+      {
+        "description": "",
+        "id": "onboarding;registro-con-campos-faltantes",
+        "keyword": "Esquema del escenario",
+        "line": 37,
+        "name": "Registro con campos faltantes",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 75211
+            }
+          },
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 167795669
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 29,
+            "name": "intento crear un empleado con nombre \"Juan\", email \"test@empresa.com\", departamentoId \"1\" y fechaIngreso \"\"",
+            "match": {
+              "location": "step_definitions/onboarding.steps.js:156"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 16413694
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 30,
+            "name": "la respuesta debe tener codigo 400",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:95"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 164371
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 149732
+            }
+          }
+        ],
+        "tags": [
+          {
+            "name": "@necesita-admin",
+            "line": 2
+          }
+        ],
+        "type": "scenario"
+      }
+    ],
+    "id": "onboarding",
+    "line": 3,
+    "keyword": "Característica",
+    "name": "Onboarding",
+    "tags": [
+      {
+        "name": "@necesita-admin",
+        "line": 2
+      }
+    ],
+    "uri": "features/03_onboarding.feature"
+  },
+  {
+    "description": "  Como area de recursos humanos\n  Quiero validar la desvinculacion de empleados\n  Para asegurar que la inactivacion se propague a todo el sistema.",
+    "elements": [
+      {
+        "description": "",
+        "id": "offboarding;desvinculacion-completa",
+        "keyword": "Escenario",
+        "line": 11,
+        "name": "Desvinculacion completa",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 84139
+            }
+          },
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 168726675
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Dado ",
+            "line": 9,
+            "name": "que existe un empleado activo con credenciales configuradas",
+            "match": {
+              "location": "step_definitions/offboarding.steps.js:143"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 2680242820
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 12,
+            "name": "el administrador desvincula al empleado",
+            "match": {
+              "location": "step_definitions/offboarding.steps.js:147"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 262740094
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 13,
+            "name": "eventualmente debe existir una notificacion de desvinculacion",
+            "match": {
+              "location": "step_definitions/offboarding.steps.js:164"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 29408352
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 200004
+            }
+          }
+        ],
+        "tags": [
+          {
+            "name": "@necesita-admin",
+            "line": 2
+          }
+        ],
+        "type": "scenario"
+      },
+      {
+        "description": "",
+        "id": "offboarding;empleado-desvinculado-no-puede-hacer-login",
+        "keyword": "Escenario",
+        "line": 15,
+        "name": "Empleado desvinculado no puede hacer login",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 48918
+            }
+          },
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 207520054
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Dado ",
+            "line": 9,
+            "name": "que existe un empleado activo con credenciales configuradas",
+            "match": {
+              "location": "step_definitions/offboarding.steps.js:143"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 4642625522
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 16,
+            "name": "el administrador desvincula al empleado",
+            "match": {
+              "location": "step_definitions/offboarding.steps.js:147"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 266483430
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Y ",
+            "line": 17,
+            "name": "el empleado intenta hacer login",
+            "match": {
+              "location": "step_definitions/offboarding.steps.js:179"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 15726896
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 18,
+            "name": "la respuesta debe tener codigo 403",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:95"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 162076
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 122667
+            }
+          }
+        ],
+        "tags": [
+          {
+            "name": "@necesita-admin",
+            "line": 2
+          }
+        ],
+        "type": "scenario"
+      },
+      {
+        "description": "",
+        "id": "offboarding;recuperacion-de-contraseña-falla-para-empleado-desvinculado",
+        "keyword": "Escenario",
+        "line": 20,
+        "name": "Recuperacion de contraseña falla para empleado desvinculado",
+        "steps": [
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 57706
+            }
+          },
+          {
+            "keyword": "Before",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 168284349
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Dado ",
+            "line": 9,
+            "name": "que existe un empleado activo con credenciales configuradas",
+            "match": {
+              "location": "step_definitions/offboarding.steps.js:143"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 2629181491
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Cuando ",
+            "line": 21,
+            "name": "el administrador desvincula al empleado",
+            "match": {
+              "location": "step_definitions/offboarding.steps.js:147"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 237893354
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Y ",
+            "line": 22,
+            "name": "solicito recuperacion de contraseña para el empleado desvinculado",
+            "match": {
+              "location": "step_definitions/offboarding.steps.js:202"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 19409409
+            }
+          },
+          {
+            "arguments": [],
+            "keyword": "Entonces ",
+            "line": 23,
+            "name": "la respuesta debe tener codigo 403",
+            "match": {
+              "location": "step_definitions/seguridad.steps.js:95"
+            },
+            "result": {
+              "status": "passed",
+              "duration": 219841
+            }
+          },
+          {
+            "keyword": "After",
+            "hidden": true,
+            "result": {
+              "status": "passed",
+              "duration": 134460
+            }
+          }
+        ],
+        "tags": [
+          {
+            "name": "@necesita-admin",
+            "line": 2
+          }
+        ],
+        "type": "scenario"
+      }
+    ],
+    "id": "offboarding",
+    "line": 3,
+    "keyword": "Característica",
+    "name": "Offboarding",
+    "tags": [
+      {
+        "name": "@necesita-admin",
+        "line": 2
+      }
+    ],
+    "uri": "features/04_offboarding.feature"
+  }
+]

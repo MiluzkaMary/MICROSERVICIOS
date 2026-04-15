@@ -83,8 +83,6 @@ Tabla principal en auth_db: usuarios
 - password_hash
 - role
 - activo
-- token_recuperacion
-- token_expiracion
 
 ## Flujo de login
 
@@ -159,8 +157,8 @@ servidor-notificaciones
 1. servidor-empleados publica empleado.creado.
 2. auth-service consume empleado.creado.
 3. Crea usuario con role USER y password_hash NULL.
-4. Genera token UUID y expiracion.
-5. Guarda token_recuperacion/token_expiracion.
+4. Genera token JWT stateless con claims sub/type/iat/exp.
+5. Publica el token en el evento usuario.creado.
 6. Publica usuario.creado.
 7. servidor-notificaciones envia correo de activacion.
 8. Usuario ejecuta POST /auth/reset-password para establecer password.
@@ -169,12 +167,12 @@ servidor-notificaciones
 
 1. Usuario ejecuta POST /auth/recover-password con email.
 2. auth-service valida existencia y estado activo.
-3. Genera token UUID y expiracion.
-4. Guarda token en auth_db.
+3. Genera token JWT stateless con claims sub/type/iat/exp.
+4. No persiste token en auth_db; la validez se determina por firma y exp.
 5. Publica usuario.recuperacion.
 6. servidor-notificaciones envia correo con token.
 7. Usuario ejecuta POST /auth/reset-password con token + nuevaPassword.
-8. auth-service valida token y expiracion, actualiza password_hash y limpia tokenes.
+8. auth-service valida JWT y expiracion con jwt.verify y actualiza password_hash.
 
 ## Propagacion de token entre servicios
 

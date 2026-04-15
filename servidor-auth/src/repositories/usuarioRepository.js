@@ -29,17 +29,6 @@ class UsuarioRepository {
   }
 
   /**
-   * Buscar usuario por token de recuperación
-   */
-  async buscarPorToken(token) {
-    const result = await pool.query(
-      'SELECT * FROM usuarios WHERE token_recuperacion = $1',
-      [token]
-    );
-    return result.rows.length > 0 ? new Usuario(result.rows[0]) : null;
-  }
-
-  /**
    * Crear nuevo usuario (sin contraseña)
    */
   async crear(empleadoId, email, role = 'USER') {
@@ -53,15 +42,17 @@ class UsuarioRepository {
   }
 
   /**
-   * Establecer token de recuperación/activación
+   * Reactivar usuario existente
    */
-  async establecerTokenRecuperacion(empleadoId, token, expiracion) {
+  async reactivar(empleadoId, email = null) {
     const result = await pool.query(
       `UPDATE usuarios 
-       SET token_recuperacion = $1, token_expiracion = $2, updated_at = CURRENT_TIMESTAMP
-       WHERE empleado_id = $3
+       SET activo = true,
+           email = COALESCE($2, email),
+           updated_at = CURRENT_TIMESTAMP
+       WHERE empleado_id = $1
        RETURNING *`,
-      [token, expiracion, empleadoId]
+      [empleadoId, email]
     );
     return result.rows.length > 0 ? new Usuario(result.rows[0]) : null;
   }
@@ -72,9 +63,7 @@ class UsuarioRepository {
   async establecerPassword(empleadoId, passwordHash) {
     const result = await pool.query(
       `UPDATE usuarios 
-       SET password_hash = $1, 
-           token_recuperacion = NULL, 
-           token_expiracion = NULL,
+       SET password_hash = $1,
            updated_at = CURRENT_TIMESTAMP
        WHERE empleado_id = $2
        RETURNING *`,
@@ -89,9 +78,7 @@ class UsuarioRepository {
   async inhabilitar(empleadoId) {
     const result = await pool.query(
       `UPDATE usuarios 
-       SET activo = false, 
-           token_recuperacion = NULL, 
-           token_expiracion = NULL,
+       SET activo = false,
            updated_at = CURRENT_TIMESTAMP
        WHERE empleado_id = $1
        RETURNING *`,

@@ -28,8 +28,6 @@ Campos relevantes:
 - password_hash
 - role
 - activo
-- token_recuperacion
-- token_expiracion
 
 Seed:
 - Usuario admin inicial: ADMIN / admin@empresa.com
@@ -48,6 +46,6 @@ Publica:
 - usuario.recuperacion
 
 ## Participacion en el flujo general
-- En alta de empleado: crea usuario USER sin password, genera token y publica usuario.creado.
+- En alta de empleado: crea usuario USER sin password, genera token JWT stateless y publica usuario.creado.
 - En eliminacion de empleado: marca usuario como inactivo.
-- En recuperacion de password: genera token temporal y publica usuario.recuperacion.
+- En recuperacion de password: genera token JWT stateless temporal y publica usuario.recuperacion.

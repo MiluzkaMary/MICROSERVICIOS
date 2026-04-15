@@ -10,8 +10,8 @@ class EmpleadoRepository {
    */
   async crear(empleado) {
     const query = `
-      INSERT INTO empleados (id, nombre, email, departamento_id, fecha_ingreso)
-      VALUES ($1, $2, $3, $4, $5)
+      INSERT INTO empleados (id, nombre, email, departamento_id, fecha_ingreso, activo)
+      VALUES ($1, $2, $3, $4, $5, $6)
       RETURNING *
     `;
     
@@ -20,7 +20,8 @@ class EmpleadoRepository {
       empleado.nombre,
       empleado.email,
       empleado.departamentoId,
-      empleado.fechaIngreso
+      empleado.fechaIngreso,
+      empleado.activo
     ];
 
     const result = await db.query(query, values);
@@ -83,7 +84,8 @@ class EmpleadoRepository {
       order = 'ASC',
       q,
       nombre,
-      departamentoId
+      departamentoId,
+      estado
     } = opciones;
 
     // Construir la cláusula WHERE dinámicamente
@@ -113,10 +115,19 @@ class EmpleadoRepository {
       paramIndex++;
     }
 
+    if (estado) {
+      const estadoNormalizado = String(estado).trim().toLowerCase();
+      if (estadoNormalizado === 'activo' || estadoNormalizado === 'true') {
+        condiciones.push('activo = true');
+      } else if (estadoNormalizado === 'inactivo' || estadoNormalizado === 'false') {
+        condiciones.push('activo = false');
+      }
+    }
+
     const whereClause = condiciones.length > 0 ? `WHERE ${condiciones.join(' AND ')}` : '';
 
     // Validar campo de ordenamiento para prevenir SQL injection
-    const camposPermitidos = ['id', 'nombre', 'email', 'departamento_id', 'fecha_ingreso'];
+    const camposPermitidos = ['id', 'nombre', 'email', 'departamento_id', 'fecha_ingreso', 'activo'];
     const campoOrden = camposPermitidos.includes(sortBy) ? sortBy : 'id';
     const direccionOrden = order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
 
@@ -159,7 +170,7 @@ class EmpleadoRepository {
   async actualizar(id, datos) {
     const query = `
       UPDATE empleados
-      SET nombre = $1, email = $2, departamento_id = $3, fecha_ingreso = $4
+      SET nombre = $1, email = $2, departamento_id = $3, fecha_ingreso = $4, updated_at = CURRENT_TIMESTAMP
       WHERE id = $5
       RETURNING *
     `;
@@ -187,10 +198,42 @@ class EmpleadoRepository {
    * @returns {Promise<boolean>} true si se eliminó, false si no existía
    */
   async eliminar(id) {
-    const query = 'DELETE FROM empleados WHERE id = $1';
+    const query = `
+      UPDATE empleados
+      SET activo = false,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING *
+    `;
     const result = await db.query(query, [id]);
-    
-    return result.rowCount > 0;
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    return this._mapearEmpleado(result.rows[0]);
+  }
+
+  /**
+   * Reactiva un empleado previamente desactivado
+   * @param {string} id - ID del empleado
+   * @returns {Promise<Empleado|null>} Empleado reactivado o null
+   */
+  async reactivar(id) {
+    const query = `
+      UPDATE empleados
+      SET activo = true,
+          updated_at = CURRENT_TIMESTAMP
+      WHERE id = $1
+      RETURNING *
+    `;
+    const result = await db.query(query, [id]);
+
+    if (result.rows.length === 0) {
+      return null;
+    }
+
+    return this._mapearEmpleado(result.rows[0]);
   }
 
   /**
@@ -203,7 +246,8 @@ class EmpleadoRepository {
       nombre: row.nombre,
       email: row.email,
       departamentoId: row.departamento_id,
-      fechaIngreso: row.fecha_ingreso
+      fechaIngreso: row.fecha_ingreso,
+      activo: row.activo
     });
   }
 }

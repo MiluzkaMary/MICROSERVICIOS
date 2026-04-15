@@ -188,7 +188,7 @@ class NotificacionService {
 
     } catch (error) {
       console.error('❌ Error al procesar notificación de desvinculación:', error);
-      
+
       // Si se guardó pero falló el email, actualizar estado
       if (notificacionGuardada) {
         await notificacionRepository.updateEstado(notificacionGuardada.id, 'FALLIDA');
@@ -198,6 +198,61 @@ class NotificacionService {
         success: false,
         statusCode: 500,
         message: 'Error al procesar notificación',
+        errors: [error.message]
+      };
+    }
+  }
+
+  /**
+   * Procesa evento de empleado reactivado y envía correo de vinculación
+   */
+  async procesarEmpleadoReactivado(empleadoId, nombre, email) {
+    console.log(`📬 Procesando notificación de vinculación para ${nombre} (${empleadoId})`);
+
+    const notificacion = new Notificacion({
+      empleadoId: empleadoId,
+      tipo: 'ACTIVACION',
+      destinatario: email,
+      mensaje: `Reactivación de cuenta para ${empleadoId}`,
+      estado: 'PENDIENTE',
+      fechaEnvio: new Date()
+    });
+
+    let notificacionGuardada;
+
+    try {
+      notificacionGuardada = await notificacionRepository.create(notificacion);
+
+      const resultadoEmail = await emailService.enviarVinculacion(nombre, email, empleadoId);
+
+      if (resultadoEmail.success) {
+        await notificacionRepository.updateEstado(notificacionGuardada.id, 'ENVIADA');
+        notificacionGuardada.estado = 'ENVIADA';
+        console.log(`✅ Notificación de vinculación enviada a ${email}`);
+      } else {
+        await notificacionRepository.updateEstado(notificacionGuardada.id, 'FALLIDA');
+        notificacionGuardada.estado = 'FALLIDA';
+        console.warn(`⚠️ Notificación registrada pero email falló: ${resultadoEmail.error}`);
+      }
+
+      return {
+        success: true,
+        statusCode: 201,
+        message: 'Notificación de vinculación procesada',
+        data: notificacionGuardada
+      };
+
+    } catch (error) {
+      console.error('❌ Error al procesar notificación de vinculación:', error);
+
+      if (notificacionGuardada) {
+        await notificacionRepository.updateEstado(notificacionGuardada.id, 'FALLIDA');
+      }
+
+      return {
+        success: false,
+        statusCode: 500,
+        message: 'Error al procesar notificación de vinculación',
         errors: [error.message]
       };
     }

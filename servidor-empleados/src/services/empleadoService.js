@@ -100,6 +100,13 @@ class EmpleadoService {
       // Verificar duplicados por ID
       const empleadoExistentePorId = await empleadoRepository.buscarPorId(empleado.id);
       if (empleadoExistentePorId) {
+        if (!empleadoExistentePorId.activo) {
+          return {
+            success: false,
+            statusCode: 409,
+            message: `El empleado ${empleado.id} existe pero está inactivo. Use el endpoint de reactivación.`
+          };
+        }
         return {
           success: false,
           statusCode: 409,
@@ -110,6 +117,13 @@ class EmpleadoService {
       // Verificar duplicados por email
       const empleadoExistentePorEmail = await empleadoRepository.buscarPorEmail(empleado.email);
       if (empleadoExistentePorEmail) {
+        if (!empleadoExistentePorEmail.activo) {
+          return {
+            success: false,
+            statusCode: 409,
+            message: `Ya existe un empleado inactivo con email ${empleado.email}. Use el endpoint de reactivación con su ID.`
+          };
+        }
         return {
           success: false,
           statusCode: 409,
@@ -331,7 +345,7 @@ class EmpleadoService {
         };
       }
 
-      // Eliminar empleado
+      // Desactivar empleado
       const eliminado = await empleadoRepository.eliminar(id);
 
       if (!eliminado) {
@@ -344,16 +358,18 @@ class EmpleadoService {
 
       // Publicar evento empleado.eliminado en RabbitMQ
       await publicarEvento('empleado.eliminado', {
-        empleadoId: empleadoExistente.id,
-        nombre: empleadoExistente.nombre,
-        email: empleadoExistente.email,
+        empleadoId: eliminado.id,
+        nombre: eliminado.nombre,
+        email: eliminado.email,
+        departamentoId: eliminado.departamentoId,
+        fechaIngreso: eliminado.fechaIngreso,
         timestamp: new Date().toISOString()
       });
 
       return {
         success: true,
         statusCode: 200,
-        message: `Empleado ${id} eliminado exitosamente`
+        message: `Empleado ${id} desactivado exitosamente`
       };
     } catch (error) {
       console.error('Error al eliminar empleado:', error);
@@ -361,6 +377,65 @@ class EmpleadoService {
         success: false,
         statusCode: 500,
         message: 'Error interno al eliminar el empleado'
+      };
+    }
+  }
+
+  /**
+   * Reactiva un empleado previamente desactivado
+   * @param {string} id - ID del empleado
+   * @returns {Promise<Object>} Resultado de la operación
+   */
+  async reactivarEmpleado(id) {
+    try {
+      const empleadoExistente = await empleadoRepository.buscarPorId(id);
+      if (!empleadoExistente) {
+        return {
+          success: false,
+          statusCode: 404,
+          message: `El empleado con id ${id} no existe`
+        };
+      }
+
+      if (empleadoExistente.activo) {
+        return {
+          success: false,
+          statusCode: 409,
+          message: `El empleado ${id} ya se encuentra activo`
+        };
+      }
+
+      const reactivado = await empleadoRepository.reactivar(id);
+
+      if (!reactivado) {
+        return {
+          success: false,
+          statusCode: 404,
+          message: `El empleado con id ${id} no existe`
+        };
+      }
+
+      await publicarEvento('empleado.reactivado', {
+        empleadoId: reactivado.id,
+        nombre: reactivado.nombre,
+        email: reactivado.email,
+        departamentoId: reactivado.departamentoId,
+        fechaIngreso: reactivado.fechaIngreso,
+        timestamp: new Date().toISOString()
+      });
+
+      return {
+        success: true,
+        statusCode: 200,
+        message: `Empleado ${id} reactivado exitosamente`,
+        data: reactivado.toJSON()
+      };
+    } catch (error) {
+      console.error('Error al reactivar empleado:', error);
+      return {
+        success: false,
+        statusCode: 500,
+        message: 'Error interno al reactivar el empleado'
       };
     }
   }

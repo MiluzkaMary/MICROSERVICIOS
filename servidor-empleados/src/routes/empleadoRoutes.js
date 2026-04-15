@@ -228,9 +228,9 @@ router.put('/:id', requiereAuth, requiereAdmin, (req, res) => empleadoController
  *   delete:
  *     tags:
  *       - Empleados
- *     summary: Eliminar un empleado (desvinculación)
+ *     summary: Desactivar un empleado (desvinculación)
  *     description: |
- *       Elimina un empleado del sistema y publica un evento `empleado.eliminado` 
+ *       Desactiva (eliminación lógica) un empleado del sistema y publica un evento `empleado.eliminado` 
  *       en RabbitMQ para notificar a otros servicios.
  *     security:
  *       - BearerAuth: []
@@ -244,7 +244,7 @@ router.put('/:id', requiereAuth, requiereAdmin, (req, res) => empleadoController
  *         example: EMP001
  *     responses:
  *       200:
- *         description: Empleado eliminado exitosamente
+ *         description: Empleado desactivado exitosamente
  *         content:
  *           application/json:
  *             schema:
@@ -252,7 +252,7 @@ router.put('/:id', requiereAuth, requiereAdmin, (req, res) => empleadoController
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Empleado EMP001 eliminado exitosamente
+ *                   example: Empleado EMP001 desactivado exitosamente
  *       401:
  *         description: No autenticado o token inválido
  *       403:
@@ -263,5 +263,41 @@ router.put('/:id', requiereAuth, requiereAdmin, (req, res) => empleadoController
  *         $ref: '#/components/responses/InternalServerError'
  */
 router.delete('/:id', requiereAuth, requiereAdmin, (req, res) => empleadoController.eliminar(req, res));
+
+/**
+ * @swagger
+ * /empleados/{id}/reactivar:
+ *   patch:
+ *     tags:
+ *       - Empleados
+ *     summary: Reactivar un empleado
+ *     description: |
+ *       Reactiva un empleado previamente desactivado y publica un evento `empleado.reactivado`
+ *       para que los microservicios asociados reactiven usuario y perfil.
+ *     security:
+ *       - BearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: id
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID único del empleado
+ *         example: EMP001
+ *     responses:
+ *       200:
+ *         description: Empleado reactivado exitosamente
+ *       401:
+ *         description: No autenticado o token inválido
+ *       403:
+ *         description: Requiere permisos de administrador
+ *       404:
+ *         $ref: '#/components/responses/NotFound'
+ *       409:
+ *         $ref: '#/components/responses/Conflict'
+ *       500:
+ *         $ref: '#/components/responses/InternalServerError'
+ */
+router.patch('/:id/reactivar', requiereAuth, requiereAdmin, (req, res) => empleadoController.reactivar(req, res));
 
 module.exports = router;

@@ -72,6 +72,7 @@ services:
       - NODE_ENV=production
       # Configuración JWT
       - JWT_SECRET=${JWT_SECRET}
+      - JWT_EXPIRATION=${JWT_EXPIRATION:-24h}
       - JWT_EXPIRES_IN=${JWT_EXPIRES_IN:-24h}
       # Configuración RabbitMQ
       - RABBITMQ_HOST=rabbitmq
@@ -322,6 +323,29 @@ services:
       - notificaciones-service
     networks:
       - microservicios-network
+
+  bdd-tests:
+    build:
+      context: ./e2e-tests
+      dockerfile: Dockerfile
+    depends_on:
+      - gateway-service
+      - empleados-service
+      - auth-service
+      - notificaciones-service
+      - mailhog
+      - rabbitmq
+    environment:
+      BASE_URL: http://gateway-service:8085
+      ADMIN_EMAIL: ${ADMIN_EMAIL}
+      ADMIN_PASSWORD: ${ADMIN_PASSWORD}
+      USER_EMAIL: ${USER_EMAIL}
+      USER_PASSWORD: ${USER_PASSWORD}
+      MAILHOG_URL: http://mailhog:8025
+    networks:
+      - microservicios-network
+    profiles:
+      - testing
 
 networks:
   microservicios-network:

@@ -111,6 +111,29 @@ class EmpleadoController {
   }
 
   /**
+   * PATCH /empleados/:id/reactivar
+   */
+  async reactivar(req, res) {
+    const id = String(req.params.id);
+    const resultado = await empleadoService.reactivarEmpleado(id);
+
+    if (!resultado.success) {
+      return res.status(resultado.statusCode).json({
+        error: this._getErrorName(resultado.statusCode),
+        message: resultado.message,
+        status: resultado.statusCode,
+        path: req.originalUrl,
+        timestamp: new Date().toISOString()
+      });
+    }
+
+    return res.status(resultado.statusCode).json({
+      message: resultado.message,
+      data: resultado.data
+    });
+  }
+
+  /**
    * Helper para obtener nombre de error según código HTTP
    * @private
    */

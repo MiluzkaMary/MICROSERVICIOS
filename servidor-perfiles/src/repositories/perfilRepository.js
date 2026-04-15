@@ -116,8 +116,8 @@ class PerfilRepository {
    */
   async create(perfil) {
     const query = `
-      INSERT INTO perfiles (empleado_id, nombre, email, telefono, direccion, ciudad, biografia)
-      VALUES ($1, $2, $3, $4, $5, $6, $7)
+      INSERT INTO perfiles (empleado_id, nombre, email, telefono, direccion, ciudad, biografia, activo)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
       RETURNING *
     `;
     const values = [
@@ -127,7 +127,8 @@ class PerfilRepository {
       perfil.telefono,
       perfil.direccion,
       perfil.ciudad,
-      perfil.biografia
+      perfil.biografia,
+      perfil.activo
     ];
     const result = await pool.query(query, values);
     return new Perfil(result.rows[0]);
@@ -155,6 +156,36 @@ class PerfilRepository {
   }
 
   /**
+   * Desactiva un perfil por empleadoId
+   */
+  async desactivarByEmpleadoId(empleadoId) {
+    const query = `
+      UPDATE perfiles
+      SET activo = false,
+          fecha_actualizacion = CURRENT_TIMESTAMP
+      WHERE empleado_id = $1
+      RETURNING *
+    `;
+    const result = await pool.query(query, [empleadoId]);
+    return result.rows.length > 0 ? new Perfil(result.rows[0]) : null;
+  }
+
+  /**
+   * Reactiva un perfil por empleadoId
+   */
+  async reactivarByEmpleadoId(empleadoId) {
+    const query = `
+      UPDATE perfiles
+      SET activo = true,
+          fecha_actualizacion = CURRENT_TIMESTAMP
+      WHERE empleado_id = $1
+      RETURNING *
+    `;
+    const result = await pool.query(query, [empleadoId]);
+    return result.rows.length > 0 ? new Perfil(result.rows[0]) : null;
+  }
+
+  /**
    * Verifica si existe un perfil por empleadoId
    */
   async existsByEmpleadoId(empleadoId) {
@@ -175,11 +206,6 @@ class PerfilRepository {
   /**
    * Elimina un perfil por empleadoId
    */
-  async deleteByEmpleadoId(empleadoId) {
-    const query = 'DELETE FROM perfiles WHERE empleado_id = $1 RETURNING *';
-    const result = await pool.query(query, [empleadoId]);
-    return result.rows.length > 0 ? new Perfil(result.rows[0]) : null;
-  }
 }
 
 module.exports = new PerfilRepository();

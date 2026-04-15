@@ -17,8 +17,10 @@ const RABBITMQ_CONFIG = {
 const EXCHANGE_NAME = 'empleados_events';
 const QUEUE_EMPLEADO_CREADO = 'perfiles.empleado_creado';
 const QUEUE_EMPLEADO_ELIMINADO = 'perfiles.empleado_eliminado';
+const QUEUE_EMPLEADO_REACTIVADO = 'perfiles.empleado_reactivado';
 const ROUTING_KEY_CREADO = 'empleado.creado';
 const ROUTING_KEY_ELIMINADO = 'empleado.eliminado';
+const ROUTING_KEY_REACTIVADO = 'empleado.reactivado';
 
 /**
  * Conecta a RabbitMQ y configura el consumidor con reintentos
@@ -52,11 +54,19 @@ async function connect(retries = 5, delay = 3000) {
       // Vincular cola al exchange con routing key empleado.eliminado
       await channel.bindQueue(QUEUE_EMPLEADO_ELIMINADO, EXCHANGE_NAME, ROUTING_KEY_ELIMINADO);
 
+      // Declarar cola para empleado.reactivado
+      await channel.assertQueue(QUEUE_EMPLEADO_REACTIVADO, {
+        durable: true
+      });
+
+      // Vincular cola al exchange con routing key empleado.reactivado
+      await channel.bindQueue(QUEUE_EMPLEADO_REACTIVADO, EXCHANGE_NAME, ROUTING_KEY_REACTIVADO);
+
       // Configurar prefetch (procesar 1 mensaje a la vez)
       await channel.prefetch(1);
 
       console.log('✅ Conectado a RabbitMQ');
-      console.log(`🎯 Escuchando eventos: ${ROUTING_KEY_CREADO}, ${ROUTING_KEY_ELIMINADO}`);
+      console.log(`🎯 Escuchando eventos: ${ROUTING_KEY_CREADO}, ${ROUTING_KEY_ELIMINADO}, ${ROUTING_KEY_REACTIVADO}`);
 
       // Consumir mensajes de empleado.creado
       channel.consume(QUEUE_EMPLEADO_CREADO, async (mensaje) => {
@@ -73,8 +83,8 @@ async function connect(retries = 5, delay = 3000) {
             console.log('✅ Mensaje procesado exitosamente');
           } catch (error) {
             console.error('❌ Error al procesar mensaje:', error.message);
-            // Rechazar mensaje y no re-encolar (enviar a DLQ si está configurado)
-            channel.nack(mensaje, false, false);
+            // Rechazar mensaje y re-encolar para reintento
+            channel.nack(mensaje, false, true);
           }
         }
       });
@@ -94,8 +104,29 @@ async function connect(retries = 5, delay = 3000) {
             console.log('✅ Mensaje procesado exitosamente');
           } catch (error) {
             console.error('❌ Error al procesar mensaje:', error.message);
-            // Rechazar mensaje y no re-encolar (enviar a DLQ si está configurado)
-            channel.nack(mensaje, false, false);
+            // Rechazar mensaje y re-encolar para reintento
+            channel.nack(mensaje, false, true);
+          }
+        }
+      });
+
+      // Consumir mensajes de empleado.reactivado
+      channel.consume(QUEUE_EMPLEADO_REACTIVADO, async (mensaje) => {
+        if (mensaje !== null) {
+          try {
+            const contenido = JSON.parse(mensaje.content.toString());
+            console.log(`📨 Evento recibido: ${ROUTING_KEY_REACTIVADO}`, contenido);
+
+            // Procesar evento
+            await procesarEmpleadoReactivado(contenido);
+
+            // Confirmar mensaje
+            channel.ack(mensaje);
+            console.log('✅ Mensaje procesado exitosamente');
+          } catch (error) {
+            console.error('❌ Error al procesar mensaje:', error.message);
+            // Rechazar mensaje y re-encolar para reintento
+            channel.nack(mensaje, false, true);
           }
         }
       });
@@ -149,12 +180,30 @@ async function procesarEmpleadoEliminado(evento) {
   
   console.log(`🗑️  Procesando eliminación de perfil para empleado: ${empleadoId} - ${nombre}`);
   
-  const resultado = await perfilService.eliminarPerfilPorEmpleadoId(empleadoId);
+  const resultado = await perfilService.desactivarPerfilPorEmpleadoId(empleadoId);
   
   if (resultado.success) {
     console.log(`✅ Perfil eliminado exitosamente para ${nombre}`);
   } else {
     console.error(`❌ Error al eliminar perfil para ${nombre}:`, resultado.message);
+    throw new Error(resultado.message);
+  }
+}
+
+/**
+ * Procesa el evento empleado.reactivado
+ */
+async function procesarEmpleadoReactivado(evento) {
+  const { empleadoId, nombre, email } = evento;
+
+  console.log(`♻️  Procesando reactivación de perfil para empleado: ${empleadoId} - ${nombre}`);
+
+  const resultado = await perfilService.reactivarPerfilPorEmpleadoId(empleadoId);
+
+  if (resultado.success) {
+    console.log(`✅ Perfil reactivado exitosamente para ${nombre}`);
+  } else {
+    console.error(`❌ Error al reactivar perfil para ${nombre}:`, resultado.message);
     throw new Error(resultado.message);
   }
 }
