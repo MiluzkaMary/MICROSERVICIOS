@@ -1,0 +1,25 @@
+﻿<?xml version='1.1' encoding='UTF-8'?>
+<flow-definition plugin="workflow-job">
+  <description>Pipeline de verificacion de Docker en Jenkins</description>
+  <keepDependencies>false</keepDependencies>
+  <properties/>
+  <definition class="org.jenkinsci.plugins.workflow.cps.CpsFlowDefinition" plugin="workflow-cps">
+    <script>
+pipeline {
+    agent any
+    stages {
+        stage(&apos;Verificacion&apos;) {
+            steps {
+                echo &apos;Jenkins esta correctamente configurado&apos;
+                sh &apos;docker --version&apos;
+                sh &apos;docker ps&apos;
+            }
+        }
+    }
+}
+    </script>
+    <sandbox>true</sandbox>
+  </definition>
+  <triggers/>
+  <disabled>false</disabled>
+</flow-definition>

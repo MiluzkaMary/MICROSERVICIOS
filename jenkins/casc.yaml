@@ -1,0 +1,41 @@
+# =============================================================
+# casc.yaml — Jenkins Configuration as Code (JCasC)
+# Configura Jenkins de forma idempotente en el primer arranque
+# =============================================================
+jenkins:
+  systemMessage: |
+    🚀 Jenkins configurado automáticamente para el proyecto Microservicios.
+    Docker CLI disponible. Todos los plugins pre-instalados.
+
+  # Sin restricción: en desarrollo el nodo master puede ejecutar jobs
+  numExecutors: 4
+
+  # Autenticación: usuario admin con contraseña definida por variable de entorno
+  securityRealm:
+    local:
+      allowsSignup: false
+      users:
+        - id: "admin"
+          password: "${JENKINS_ADMIN_PASSWORD:-admin123}"
+
+  authorizationStrategy:
+    loggedInUsersCanDoAnything:
+      allowAnonymousRead: false
+
+  # Configuración de ubicación (URL pública de Jenkins)
+  location:
+    url: "http://localhost:9090/"
+    adminAddress: "admin@empresa.com"
+
+tool:
+  # Configuración de Git para pipelines
+  git:
+    installations:
+      - name: "Default"
+        home: "git"
+
+security:
+  # Deshabilitar CSRF en desarrollo para facilitar pruebas de API
+  # NOTA: habilitar en producción
+  globalJobDslSecurityConfiguration:
+    useScriptSecurity: false

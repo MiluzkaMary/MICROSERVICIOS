@@ -347,6 +347,43 @@ services:
     profiles:
       - testing
 
+  # ─────────────────────────────────────────────────────────────
+  # Jenkins CI/CD — Accesible en http://localhost:9090
+  # Usuario: admin | Contraseña: definida en JENKINS_ADMIN_PASSWORD (.env)
+  # ─────────────────────────────────────────────────────────────
+  jenkins:
+    build:
+      context: ./jenkins
+      dockerfile: Dockerfile
+    container_name: jenkins
+    restart: unless-stopped
+    user: root                   # Necesario para acceder al socket Docker del host
+    environment:
+      # Contraseña del usuario admin (cámbiala en .env)
+      - JENKINS_ADMIN_PASSWORD=${JENKINS_ADMIN_PASSWORD:-admin123}
+      # Apunta al archivo de configuración JCasC montado
+      - CASC_JENKINS_CONFIG=/var/jenkins_casc/casc.yaml
+      # Deshabilita wizard de setup y configura memoria JVM
+      - JAVA_OPTS=-Djenkins.install.runSetupWizard=false -Xmx1g
+    ports:
+      - "9090:8080"   # UI web de Jenkins
+      - "50000:50000" # Puerto para agentes Jenkins remotos
+    volumes:
+      # Persistencia de datos de Jenkins (jobs, configuración, builds)
+      - jenkins_home:/var/jenkins_home
+      # Montar el socket Docker del host para que Jenkins pueda construir imágenes
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Configuración JCasC (solo lectura)
+      - ./jenkins/casc.yaml:/var/jenkins_casc/casc.yaml:ro
+    networks:
+      - microservicios-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080/login || exit 1"]
+      interval: 30s
+      timeout: 10s
+      retries: 5
+      start_period: 90s
+
 networks:
   microservicios-network:
     driver: bridge
@@ -358,3 +395,4 @@ volumes:
   perfiles_data:
   notificaciones_data:
   rabbitmq_data:
+  jenkins_home:    # Persistencia de jobs, plugins y configuración de Jenkins
