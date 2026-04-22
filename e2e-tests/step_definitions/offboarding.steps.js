@@ -62,7 +62,6 @@ async function crearEmpleadoActivoConCredenciales(world) {
 
   const email = `test-${uuidv4()}@empresa.com`;
   const respuestaEmpleado = await world.http.post('/empleados', {
-    id: `EMP-${uuidv4()}`,
     nombre: 'Empleado Offboarding',
     email,
     departamentoId: String(world.lastCreatedDepartamento.id),

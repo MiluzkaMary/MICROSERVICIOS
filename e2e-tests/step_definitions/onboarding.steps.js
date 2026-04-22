@@ -33,7 +33,6 @@ async function crearEmpleadoOnboarding(world, overrides = {}) {
 
   const email = overrides.email || crearEmailUnico();
   const payload = {
-    id: overrides.id || `EMP-${uuidv4()}`,
     nombre: overrides.nombre || 'Empleado Onboarding',
     email,
     departamentoId: overrides.departamentoId || String(world.lastCreatedDepartamento.id),
@@ -135,7 +134,6 @@ When('creo un empleado de onboarding', async function () {
 
 When('intento crear un empleado con departamento inexistente', async function () {
   const payload = {
-    id: `EMP-${uuidv4()}`,
     nombre: 'Empleado Invalido',
     email: crearEmailUnico(),
     departamentoId: '999999',
@@ -154,9 +152,7 @@ When('intento crear un empleado con departamento inexistente', async function ()
 });
 
 When('intento crear un empleado con nombre {string}, email {string}, departamentoId {string} y fechaIngreso {string}', async function (nombre, email, departamentoId, fechaIngreso) {
-  const payload = {
-    id: `EMP-${uuidv4()}`
-  };
+  const payload = {};
 
   if (nombre) payload.nombre = nombre;
   if (email) payload.email = email;

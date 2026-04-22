@@ -1,7 +1,7 @@
 -- Tabla de empleados 
 
 CREATE TABLE IF NOT EXISTS empleados (
-    id VARCHAR(50) PRIMARY KEY,
+    id SERIAL PRIMARY KEY,
     nombre VARCHAR(100) NOT NULL,
     email VARCHAR(150) NOT NULL UNIQUE,
     departamento_id VARCHAR(50) NOT NULL,

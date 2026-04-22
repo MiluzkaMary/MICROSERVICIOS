@@ -97,23 +97,6 @@ class EmpleadoService {
         };
       }
 
-      // Verificar duplicados por ID
-      const empleadoExistentePorId = await empleadoRepository.buscarPorId(empleado.id);
-      if (empleadoExistentePorId) {
-        if (!empleadoExistentePorId.activo) {
-          return {
-            success: false,
-            statusCode: 409,
-            message: `El empleado ${empleado.id} existe pero está inactivo. Use el endpoint de reactivación.`
-          };
-        }
-        return {
-          success: false,
-          statusCode: 409,
-          message: `Ya existe un empleado con id ${empleado.id}`
-        };
-      }
-
       // Verificar duplicados por email
       const empleadoExistentePorEmail = await empleadoRepository.buscarPorEmail(empleado.email);
       if (empleadoExistentePorEmail) {

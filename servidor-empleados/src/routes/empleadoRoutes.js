@@ -83,9 +83,9 @@ router.post('/', requiereAuth, requiereAdmin, (req, res) => empleadoController.c
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: integer
  *         description: ID único del empleado
- *         example: EMP001
+ *         example: 6
  *     responses:
  *       201:
  *         description: Empleado encontrado
@@ -193,9 +193,9 @@ router.get('/', requiereAuth, (req, res) => empleadoController.obtenerTodos(req,
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: integer
  *         description: ID único del empleado
- *         example: EMP001
+ *         example: 6
  *     requestBody:
  *       required: true
  *       content:
@@ -239,9 +239,9 @@ router.put('/:id', requiereAuth, requiereAdmin, (req, res) => empleadoController
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: integer
  *         description: ID único del empleado
- *         example: EMP001
+ *         example: 6
  *     responses:
  *       200:
  *         description: Empleado desactivado exitosamente
@@ -252,7 +252,7 @@ router.put('/:id', requiereAuth, requiereAdmin, (req, res) => empleadoController
  *               properties:
  *                 message:
  *                   type: string
- *                   example: Empleado EMP001 desactivado exitosamente
+ *                   example: Empleado 6 desactivado exitosamente
  *       401:
  *         description: No autenticado o token inválido
  *       403:
@@ -281,9 +281,9 @@ router.delete('/:id', requiereAuth, requiereAdmin, (req, res) => empleadoControl
  *         name: id
  *         required: true
  *         schema:
- *           type: string
+ *           type: integer
  *         description: ID único del empleado
- *         example: EMP001
+ *         example: 6
  *     responses:
  *       200:
  *         description: Empleado reactivado exitosamente

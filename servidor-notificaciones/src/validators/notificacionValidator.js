@@ -2,15 +2,23 @@
  * Validadores para Notificaciones
  */
 class NotificacionValidator {
+  static normalizarEmpleadoId(empleadoId) {
+    if (empleadoId === undefined || empleadoId === null) {
+      return '';
+    }
+    return String(empleadoId).trim();
+  }
+
   /**
    * Valida empleadoId en la URL
    */
   static validarEmpleadoId(empleadoId) {
     const errores = [];
+    const empleadoIdNormalizado = this.normalizarEmpleadoId(empleadoId);
 
-    if (!empleadoId || empleadoId.trim() === '') {
+    if (!empleadoIdNormalizado) {
       errores.push('El empleadoId es requerido');
-    } else if (empleadoId.length > 50) {
+    } else if (empleadoIdNormalizado.length > 50) {
       errores.push('El empleadoId no puede tener más de 50 caracteres');
     }
 
@@ -25,8 +33,9 @@ class NotificacionValidator {
    */
   static validarEventoEmpleadoCreado(datos) {
     const errores = [];
+    const empleadoIdNormalizado = this.normalizarEmpleadoId(datos.empleadoId);
 
-    if (!datos.empleadoId || datos.empleadoId.trim() === '') {
+    if (!empleadoIdNormalizado) {
       errores.push('El empleadoId es requerido');
     }
 
@@ -51,8 +60,9 @@ class NotificacionValidator {
    */
   static validarEventoEmpleadoDesvinculado(datos) {
     const errores = [];
+    const empleadoIdNormalizado = this.normalizarEmpleadoId(datos.empleadoId);
 
-    if (!datos.empleadoId || datos.empleadoId.trim() === '') {
+    if (!empleadoIdNormalizado) {
       errores.push('El empleadoId es requerido');
     }
 

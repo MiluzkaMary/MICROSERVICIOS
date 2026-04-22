@@ -1,4 +1,5 @@
-const { Before, After, AfterStep, setDefaultTimeout } = require('@cucumber/cucumber');
+const { Before, After, AfterAll, AfterStep, setDefaultTimeout } = require('@cucumber/cucumber');
+const { cleanupE2eTestData } = require('./dbCleanup');
 
 setDefaultTimeout(30000);
 
@@ -75,5 +76,20 @@ After(async function (scenario) {
     console.error(`Escenario fallido: ${scenario.pickle ? scenario.pickle.name : 'desconocido'}`);
     console.error(`Ultima respuesta HTTP: ${status}`);
     console.error(body);
+  }
+});
+
+AfterAll(async function () {
+  if (String(process.env.E2E_DB_CLEANUP || 'true').toLowerCase() === 'false') {
+    console.log('Limpieza de DB omitida por E2E_DB_CLEANUP=false');
+    return;
+  }
+
+  try {
+    await cleanupE2eTestData((msg) => console.log(`[cleanup] ${msg}`));
+    console.log('[cleanup] Limpieza de datos de prueba finalizada');
+  } catch (error) {
+    console.error('[cleanup] Fallo durante la limpieza de datos E2E:', error.message);
+    throw error;
   }
 });

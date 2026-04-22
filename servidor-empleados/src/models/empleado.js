@@ -4,7 +4,12 @@
  */
 class Empleado {
   constructor(data = {}) {
-    this.id = data.id !== undefined ? String(data.id).trim() : "";
+    if (data.id !== undefined && data.id !== null && String(data.id).trim() !== '') {
+      const numericId = Number(data.id);
+      this.id = Number.isFinite(numericId) ? numericId : String(data.id).trim();
+    } else {
+      this.id = undefined;
+    }
     this.nombre = (data.nombre || "").trim();
     this.email = (data.email || "").trim().toLowerCase();
     this.departamentoId = data.departamentoId !== undefined ? String(data.departamentoId).trim() : "";

@@ -2,6 +2,13 @@
  * Validadores para Perfiles
  */
 class PerfilValidator {
+  static normalizarEmpleadoId(empleadoId) {
+    if (empleadoId === undefined || empleadoId === null) {
+      return '';
+    }
+    return String(empleadoId).trim();
+  }
+
   /**
    * Valida los datos para actualizar un perfil
    */
@@ -55,10 +62,11 @@ class PerfilValidator {
    */
   static validarEmpleadoId(empleadoId) {
     const errores = [];
+    const empleadoIdNormalizado = this.normalizarEmpleadoId(empleadoId);
 
-    if (!empleadoId || empleadoId.trim() === '') {
+    if (!empleadoIdNormalizado) {
       errores.push('El empleadoId es requerido');
-    } else if (empleadoId.length > 50) {
+    } else if (empleadoIdNormalizado.length > 50) {
       errores.push('El empleadoId no puede tener más de 50 caracteres');
     }
 
@@ -73,8 +81,9 @@ class PerfilValidator {
    */
   static validarCreacionDefault(empleadoId, nombre, email) {
     const errores = [];
+    const empleadoIdNormalizado = this.normalizarEmpleadoId(empleadoId);
 
-    if (!empleadoId || empleadoId.trim() === '') {
+    if (!empleadoIdNormalizado) {
       errores.push('El empleadoId es requerido');
     }
 

@@ -65,12 +65,13 @@ Microservicio para la gestión de empleados.
       schemas: {
         Empleado: {
           type: 'object',
-          required: ['id', 'nombre', 'email', 'departamentoId', 'fechaIngreso'],
+          required: ['nombre', 'email', 'departamentoId', 'fechaIngreso'],
           properties: {
             id: {
-              type: 'string',
-              description: 'Identificador único del empleado',
-              example: 'EMP001'
+              type: 'integer',
+              readOnly: true,
+              description: 'Identificador único autogenerado del empleado',
+              example: 6
             },
             nombre: {
               type: 'string',

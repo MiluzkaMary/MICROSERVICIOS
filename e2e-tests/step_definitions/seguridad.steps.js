@@ -37,7 +37,6 @@ When('uso un token invalido para consultar empleados', async function () {
 
 When('intento crear un empleado con rol USER', async function () {
   const payload = {
-    id: `USR-${Date.now()}`,
     nombre: 'Usuario De Prueba',
     email: `user-${Date.now()}@empresa.com`,
     departamentoId: '1',

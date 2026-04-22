@@ -15,9 +15,6 @@ function emailBasicoValido(email) {
 function validarEmpleado(empleado) {
   const errores = [];
 
-  if (isBlank(empleado.id)) {
-    errores.push("id es requerido");
-  }
   if (isBlank(empleado.nombre)) {
     errores.push("nombre es requerido");
   }

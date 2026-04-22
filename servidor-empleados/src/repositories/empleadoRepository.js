@@ -3,20 +3,82 @@ const db = require('../config/database');
 const Empleado = require('../models/empleado');
 
 class EmpleadoRepository {
+  constructor() {
+    this._idMode = null;
+  }
+
+  async _resolverModoId() {
+    if (this._idMode) {
+      return this._idMode;
+    }
+
+    const result = await db.query(
+      `
+        SELECT data_type, column_default
+        FROM information_schema.columns
+        WHERE table_schema = 'public'
+          AND table_name = 'empleados'
+          AND column_name = 'id'
+        LIMIT 1
+      `
+    );
+
+    if (result.rows.length === 0) {
+      this._idMode = 'serial';
+      return this._idMode;
+    }
+
+    const row = result.rows[0];
+    const dataType = String(row.data_type || '').toLowerCase();
+    const columnDefault = String(row.column_default || '').toLowerCase();
+
+    const esSerial =
+      (dataType === 'integer' || dataType === 'bigint' || dataType === 'smallint') &&
+      columnDefault.includes('nextval');
+
+    this._idMode = esSerial ? 'serial' : 'legacy';
+    return this._idMode;
+  }
+
+  _generarIdLegacy() {
+    return `EMP-${Date.now()}-${Math.floor(Math.random() * 1000)}`;
+  }
+
   /**
    * Crea un nuevo empleado en la base de datos
    * @param {Empleado} empleado 
    * @returns {Promise<Empleado>} Empleado creado
    */
   async crear(empleado) {
+    const idMode = await this._resolverModoId();
+
+    if (idMode === 'legacy') {
+      const query = `
+        INSERT INTO empleados (id, nombre, email, departamento_id, fecha_ingreso, activo)
+        VALUES ($1, $2, $3, $4, $5, $6)
+        RETURNING *
+      `;
+
+      const values = [
+        empleado.id || this._generarIdLegacy(),
+        empleado.nombre,
+        empleado.email,
+        empleado.departamentoId,
+        empleado.fechaIngreso,
+        empleado.activo
+      ];
+
+      const result = await db.query(query, values);
+      return this._mapearEmpleado(result.rows[0]);
+    }
+
     const query = `
-      INSERT INTO empleados (id, nombre, email, departamento_id, fecha_ingreso, activo)
-      VALUES ($1, $2, $3, $4, $5, $6)
+      INSERT INTO empleados (nombre, email, departamento_id, fecha_ingreso, activo)
+      VALUES ($1, $2, $3, $4, $5)
       RETURNING *
     `;
     
     const values = [
-      empleado.id,
       empleado.nombre,
       empleado.email,
       empleado.departamentoId,

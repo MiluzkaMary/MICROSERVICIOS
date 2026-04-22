@@ -9,7 +9,7 @@ class Notificacion {
     this.destinatario = (data.destinatario || "").trim();
     this.mensaje = (data.mensaje || "").trim();
     this.fechaEnvio = data.fecha_envio || data.fechaEnvio;
-    this.empleadoId = (data.empleado_id || data.empleadoId || "").trim();
+    this.empleadoId = String(data.empleado_id ?? data.empleadoId ?? '').trim();
     this.estado = (data.estado || "ENVIADA").trim().toUpperCase();
   }
 

@@ -5,7 +5,7 @@
 class Perfil {
   constructor(data = {}) {
     this.id = data.id !== undefined ? parseInt(data.id, 10) : undefined;
-    this.empleadoId = (data.empleado_id || data.empleadoId || "").trim();
+    this.empleadoId = String(data.empleado_id ?? data.empleadoId ?? '').trim();
     this.nombre = (data.nombre || "").trim();
     this.email = (data.email || "").trim();
     this.telefono = (data.telefono || "").trim();

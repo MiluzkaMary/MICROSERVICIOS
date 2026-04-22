@@ -123,7 +123,7 @@ services:
       - DB_USER=${DB_USER:-postgres}
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - DB_NAME=departamentos_db
-      - NODE_ENV=production
+      - PYTHONUNBUFFERED=1
       # Configuración JWT
       - JWT_SECRET=${JWT_SECRET}
     ports:
