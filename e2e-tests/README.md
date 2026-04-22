@@ -2,7 +2,7 @@
 
 ## Que es BDD y por que este enfoque
 
-BDD, o Behavior Driven Development, describe el comportamiento del sistema con escenarios legibles para negocio y para desarrollo. En vez de verificar manualmente con `curl` o Postman, los escenarios quedan como documentacion viva y reproducible, con aserciones automaticas y reporte HTML.
+BDD, o Behavior Driven Development, describe el comportamiento del sistema con escenarios legibles para negocio y para desarrollo. En vez de verificar manualmente con `curl` o Postman, los escenarios quedan como documentacion viva y reproducible, con aserciones automaticas y salida resumida en consola.
 
 Este enfoque encaja bien en este proyecto porque el dominio ya esta distribuido en microservicios y los flujos relevantes dependen de eventos asincronos, autenticacion JWT y reglas de negocio por rol.
 
@@ -85,7 +85,7 @@ npm test
 
 ## Interpretacion de resultados
 
-El reporte HTML se genera en `reports/cucumber-report.html`. Ahí puedes ver cada escenario, su resultado y el detalle de pasos fallidos.
+La ejecucion muestra un resumen en consola con el estado de escenarios y pasos. Cuando un escenario falla, los hooks imprimen el detalle de la ultima respuesta HTTP para facilitar el diagnostico.
 
 Si un escenario falla de forma intermitente, suele indicar una condicion asincrona no esperada o un timeout demasiado corto. En esta suite, los pasos `eventualmente` usan polling para reducir ese riesgo y evitar esperas fijas innecesarias.
 
