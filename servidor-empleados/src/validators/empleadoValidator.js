@@ -4,7 +4,29 @@ function isBlank(v) {
 }
 
 function emailBasicoValido(email) {
-  return typeof email === "string" && email.includes("@") && email.includes(".");
+  return typeof email === "string" && /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
+function fechaIngresoValida(fechaIngreso) {
+  if (typeof fechaIngreso !== "string") {
+    return false;
+  }
+
+  const coincidencia = fechaIngreso.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!coincidencia) {
+    return false;
+  }
+
+  const anio = Number(coincidencia[1]);
+  const mes = Number(coincidencia[2]);
+  const dia = Number(coincidencia[3]);
+  const fecha = new Date(Date.UTC(anio, mes - 1, dia));
+
+  return (
+    fecha.getUTCFullYear() === anio &&
+    fecha.getUTCMonth() === mes - 1 &&
+    fecha.getUTCDate() === dia
+  );
 }
 
 /**
@@ -28,6 +50,8 @@ function validarEmpleado(empleado) {
   }
   if (!empleado.fechaIngreso) {
     errores.push("fechaIngreso es requerido");
+  } else if (!fechaIngresoValida(empleado.fechaIngreso)) {
+    errores.push("fechaIngreso inválido");
   }
 
   return errores;

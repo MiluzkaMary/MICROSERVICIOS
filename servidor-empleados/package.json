@@ -5,7 +5,9 @@
   "type": "commonjs",
   "scripts": {
     "start": "node index.js",
-    "dev": "node index.js"
+    "dev": "node index.js",
+    "test": "jest --forceExit",
+    "test:coverage": "jest --coverage --runInBand --forceExit"
   },
   "dependencies": {
     "amqplib": "^0.10.3",
@@ -15,5 +17,21 @@
     "pg": "^8.11.3",
     "swagger-jsdoc": "^6.2.8",
     "swagger-ui-express": "^5.0.0"
+  },
+  "devDependencies": {
+    "@jest/globals": "^30.0.5",
+    "jest": "^30.0.5",
+    "nyc": "^17.1.0",
+    "supertest": "^7.1.4"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": ["**/tests/unit/**/*.test.js"]
+  },
+  "nyc": {
+    "include": ["src/**/*.js"],
+    "exclude": ["src/config/**", "node_modules/**"],
+    "reporter": ["lcov", "text"],
+    "report-dir": "coverage"
   }
 }
