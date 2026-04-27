@@ -29,3 +29,25 @@ docker-compose.override.yml
 # Build output
 dist/
 build/
+
+# Coverage and test artifacts
+coverage/
+.nyc_output/
+htmlcov/
+coverage.xml
+.coverage
+
+# Python virtual environments and caches
+.venv/
+venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# SonarQube scanner artifacts
+.scannerwork/
+.sonar/
+
+# Local Jenkins folders (if created manually)
+jenkins_home/
+jenkins_data/

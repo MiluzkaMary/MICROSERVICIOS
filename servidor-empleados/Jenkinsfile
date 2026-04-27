@@ -1,0 +1,118 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'cd servidor-empleados && npm install'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'cd servidor-empleados && npm run test:coverage'
+            }
+        }
+
+        stage('SonarQube') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_AUTH_TOKEN')]) {
+                        sh 'cd servidor-empleados && npx sonar-scanner -Dsonar.token=${SONAR_AUTH_TOKEN}'
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Package') {
+            steps {
+                sh '''
+                    docker build \
+                      -f servidor-empleados/Dockerfile \
+                      -t servidor-empleados:${BUILD_NUMBER} \
+                      -t servidor-empleados:latest \
+                      servidor-empleados
+                '''
+            }
+        }
+
+        stage('E2E Tests') {
+            steps {
+                sh '''
+                    set -e
+
+                    docker compose up -d \
+                      --scale jenkins=0 \
+                      --scale sonarqube=0 \
+                      --scale sonar-db=0
+
+                    for i in $(seq 1 15); do
+                      auth_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8084/health || true)
+                      emp_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/health || true)
+
+                      if [ "$auth_code" = "200" ] && [ "$emp_code" = "200" ]; then
+                        echo "Servicios auth y empleados listos para E2E."
+                        break
+                      fi
+
+                      if [ "$i" -eq 15 ]; then
+                        echo "Timeout esperando health checks. auth=$auth_code empleados=$emp_code"
+                        exit 1
+                      fi
+
+                      echo "Intento $i/15: esperando auth/empleados (auth=$auth_code empleados=$emp_code)"
+                      sleep 5
+                    done
+
+                    set -a
+                    if [ -f .env ]; then . ./.env; fi
+                    set +a
+
+                    cd e2e-tests
+                    npm install
+                    BASE_URL="${BASE_URL:-http://localhost:8085}" \
+                    ADMIN_EMAIL="${ADMIN_EMAIL}" \
+                    ADMIN_PASSWORD="${ADMIN_PASSWORD}" \
+                    USER_EMAIL="${USER_EMAIL}" \
+                    USER_PASSWORD="${USER_PASSWORD}" \
+                    MAILHOG_URL="${MAILHOG_URL:-http://localhost:8025}" \
+                    npm test
+                '''
+            }
+            post {
+                always {
+                    sh '''
+                        docker compose stop empleados-service auth-service departamentos-service \
+                          perfiles-service notificaciones-service gateway-service
+                    '''
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline finalizado - Build #${BUILD_NUMBER}"
+        }
+        success {
+            echo 'Todas las etapas pasaron'
+        }
+        failure {
+            echo 'Pipeline falló - revisa la etapa en rojo'
+        }
+    }
+}

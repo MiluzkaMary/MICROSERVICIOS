@@ -1,41 +1,81 @@
-# =============================================================
-# casc.yaml — Jenkins Configuration as Code (JCasC)
-# Configura Jenkins de forma idempotente en el primer arranque
-# =============================================================
 jenkins:
-  systemMessage: |
-    🚀 Jenkins configurado automáticamente para el proyecto Microservicios.
-    Docker CLI disponible. Todos los plugins pre-instalados.
-
-  # Sin restricción: en desarrollo el nodo master puede ejecutar jobs
+  systemMessage: "Jenkins CI — Sistema de Microservicios"
   numExecutors: 4
-
-  # Autenticación: usuario admin con contraseña definida por variable de entorno
   securityRealm:
     local:
       allowsSignup: false
       users:
         - id: "admin"
-          password: "${JENKINS_ADMIN_PASSWORD:-admin123}"
-
+          password: "admin123"
+          properties:
+            - mailer:
+                emailAddress: "admin@empresa.com"
   authorizationStrategy:
     loggedInUsersCanDoAnything:
       allowAnonymousRead: false
 
-  # Configuración de ubicación (URL pública de Jenkins)
-  location:
-    url: "http://localhost:9090/"
-    adminAddress: "admin@empresa.com"
+unclassified:
+  sonarGlobalConfiguration:
+    buildWrapperEnabled: true
+    installations:
+      - name: "SonarQube"
+        serverUrl: "http://sonarqube:9000"
+        credentialsId: "sonar-token"
+
+credentials:
+  system:
+    domainCredentials:
+      - credentials:
+          - string:
+              scope: GLOBAL
+              id: "sonar-token"
+              description: "SonarQube Token para análisis"
+              secret: "${SONAR_TOKEN}"
 
 tool:
-  # Configuración de Git para pipelines
   git:
     installations:
       - name: "Default"
         home: "git"
 
-security:
-  # Deshabilitar CSRF en desarrollo para facilitar pruebas de API
-  # NOTA: habilitar en producción
-  globalJobDslSecurityConfiguration:
-    useScriptSecurity: false
+jobs:
+  - script: |
+      pipelineJob('empleados-ci') {
+        displayName('Servidor Empleados — CI Pipeline')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/MiluzkaMary/MICROSERVICIOS.git')
+                }
+                branches('*/main')
+              }
+            }
+            scriptPath('servidor-empleados/Jenkinsfile')
+          }
+        }
+        triggers {
+          pollSCM('H/5 * * * *')
+        }
+      }
+  - script: |
+      pipelineJob('departamentos-ci') {
+        displayName('Servidor Departamentos — CI Pipeline')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/MiluzkaMary/MICROSERVICIOS.git')
+                }
+                branches('*/main')
+              }
+            }
+            scriptPath('servidor-departamentos/Jenkinsfile')
+          }
+        }
+        triggers {
+          pollSCM('H/5 * * * *')
+        }
+      }

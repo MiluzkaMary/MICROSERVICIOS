@@ -29,6 +29,28 @@ RUN apt-get update && \
     # Limpiar cache para reducir tamaño de imagen
     rm -rf /var/lib/apt/lists/*
 
+# Instalar Node.js 18 para ejecutar pipelines de servicios Node
+RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
+    apt-get install -y nodejs && \
+    rm -rf /var/lib/apt/lists/*
+
+# Instalar Python y utilidades de testing para pipelines Python
+RUN apt-get update && \
+    apt-get install -y python3 python3-pip && \
+    pip3 install --break-system-packages pytest pytest-cov && \
+    rm -rf /var/lib/apt/lists/*
+
+# Instalar Sonar Scanner CLI para análisis de calidad en pipelines
+RUN curl -sSLo /tmp/sonar-scanner.zip \
+    https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip && \
+    apt-get update && \
+    apt-get install -y unzip && \
+    unzip /tmp/sonar-scanner.zip -d /opt && \
+    mv /opt/sonar-scanner-5.0.1.3006-linux /opt/sonar-scanner && \
+    ln -s /opt/sonar-scanner/bin/sonar-scanner /usr/local/bin/sonar-scanner && \
+    rm /tmp/sonar-scanner.zip && \
+    rm -rf /var/lib/apt/lists/*
+
 # Agregar usuario jenkins al grupo docker para poder usar el socket sin sudo
 RUN groupadd -f docker && usermod -aG docker jenkins
 
@@ -43,6 +65,7 @@ ENV JAVA_OPTS="-Djenkins.install.runSetupWizard=false"
 RUN jenkins-plugin-cli --plugins \
     # ── Core Pipeline ──
     workflow-aggregator \
+    pipeline-stage-view \
     # ── Docker ──
     docker-workflow \
     docker-plugin \
@@ -55,6 +78,8 @@ RUN jenkins-plugin-cli --plugins \
     # ── Calidad de código ──
     jacoco \
     htmlpublisher \
+    sonar \
+    configuration-as-code \
     # ── UI & Reporte ──
     blueocean \
     ansicolor \

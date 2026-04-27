@@ -1,0 +1,65 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'cd servidor-departamentos && pip3 install -r requirements.txt'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'cd servidor-departamentos && pytest tests/ --cov=app --cov-report=xml --cov-report=term -v'
+            }
+        }
+
+        stage('SonarQube') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_AUTH_TOKEN')]) {
+                        sh 'cd servidor-departamentos && sonar-scanner -Dsonar.token=${SONAR_AUTH_TOKEN}'
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Package') {
+            steps {
+                sh '''
+                    docker build \
+                      -f servidor-departamentos/Dockerfile \
+                      -t servidor-departamentos:${BUILD_NUMBER} \
+                      -t servidor-departamentos:latest \
+                      servidor-departamentos
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline finalizado - Build #${BUILD_NUMBER}"
+        }
+        success {
+            echo 'Todas las etapas pasaron'
+        }
+        failure {
+            echo 'Pipeline falló - revisa la etapa en rojo'
+        }
+    }
+}
