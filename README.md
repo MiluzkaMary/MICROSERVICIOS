@@ -272,3 +272,73 @@ Swagger:
 - MESSAGE_BROKER_RABBITMQ.md
 - CIRCUIT_BREAKER.md
 - e2e-tests/README.md
+
+## CI/CD con Jenkins
+
+Este proyecto incorpora CI/CD para automatizar la verificacion continua de cada cambio. Antes, las pruebas se ejecutaban de forma manual con herramientas como curl o Postman, como ocurria en retos anteriores. Ahora, cada push al repositorio dispara el pipeline de Jenkins de forma automatica para construir, probar, analizar y validar el resultado antes de avanzar.
+
+La idea es reducir errores humanos y detectar problemas lo antes posible. Jenkins ejecuta las pruebas unitarias, publica el analisis en SonarQube, valida el Quality Gate y, en el caso del servicio de empleados, tambien corre la suite E2E con Cucumber contra el gateway.
+
+### Servicios de CI en el stack
+
+| Servicio | URL | Credenciales | Descripcion |
+| --- | --- | --- | --- |
+| Jenkins | http://localhost:9090 | admin / admin123 | Servidor de CI |
+| SonarQube | http://localhost:9000 | admin / admin2025 | Analisis de calidad |
+
+### Instrucciones paso a paso
+
+Primera vez, setup inicial:
+1. `docker-compose up --build -d`
+2. Esperar aproximadamente 2 minutos a que SonarQube inicialice completamente.
+3. `bash jenkins/setup-sonarqube.sh`
+4. Copiar el `SONAR_TOKEN` que imprime el script y pegarlo en el `.env`.
+5. `docker-compose restart jenkins`
+6. Abrir http://localhost:9090. Los pipelines `empleados-ci` y `departamentos-ci` ya quedan creados automaticamente por Jenkins Configuration as Code.
+
+Ejecuciones siguientes:
+1. `docker-compose up -d`
+2. Los pipelines se disparan automaticamente por `pollSCM` cada 5 minutos, o manualmente con `Build Now` en Jenkins.
+
+### Etapas del pipeline
+
+#### empleados-ci (Node.js)
+
+| Etapa | Que hace | Falla si... |
+| --- | --- | --- |
+| Checkout | Obtiene el codigo del repo | El repo no es accesible |
+| Build | Ejecuta `npm install` | Hay un error de dependencias |
+| Test | Ejecuta tests unitarios de Jest y genera `coverage/lcov.info` | Algun test falla |
+| SonarQube | Envia el codigo y la cobertura al analisis | SonarQube no esta disponible |
+| Quality Gate | Verifica que la cobertura sea al menos 70% | La cobertura queda por debajo del umbral |
+| Package | Construye la imagen Docker con el tag `BUILD_NUMBER` | Hay un error en el `Dockerfile` |
+| E2E Tests | Levanta servicios y corre la suite BDD con Cucumber | Alguno de los escenarios falla |
+
+#### departamentos-ci (Python)
+
+| Etapa | Que hace | Falla si... |
+| --- | --- | --- |
+| Checkout | Obtiene el codigo del repo | El repo no es accesible |
+| Build | Instala dependencias de Python | Falla la instalacion o faltan paquetes |
+| Test | Ejecuta `pytest` con coverage y genera `coverage.xml` | Alguna prueba falla |
+| SonarQube | Envia el codigo y la cobertura al analisis | SonarQube no esta disponible |
+| Quality Gate | Verifica la cobertura y la calidad definidas en SonarQube | La cobertura o la calidad no cumplen el umbral |
+| Package | Construye la imagen Docker del servicio | Hay un error en el `Dockerfile` |
+
+### Como interpretar resultados
+
+- Etapa azul o verde = paso correctamente.
+- Etapa roja = fallo en esa etapa; hacer click para ver el log exacto.
+- Si falla `Quality Gate`, abrir http://localhost:9000 para revisar las metricas y la cobertura importada.
+
+### Pipelines disponibles
+
+- `empleados-ci`: pipeline completo de Node.js con E2E.
+- `departamentos-ci`: pipeline Python sin E2E.
+
+### Simulacion de fallos
+
+- `Test`: comentar un `expect` en cualquier test y el pipeline fallara en la etapa de pruebas.
+- `Quality Gate`: reducir temporalmente la cobertura de tests y la validacion bajara del 70%.
+- `Package`: introducir un error de sintaxis en el `Dockerfile` y la etapa de empaquetado fallara.
+- `E2E Tests`: cambiar un codigo esperado en un archivo `.feature` y la suite BDD fallara.

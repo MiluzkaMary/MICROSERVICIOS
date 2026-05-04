@@ -1,6 +1,15 @@
 pipeline {
     agent any
 
+    environment {
+        BASE_URL = 'http://localhost:8085'
+        ADMIN_EMAIL = 'admin@empresa.com'
+        ADMIN_PASSWORD = 'admin123'
+        USER_EMAIL = 'juan.solis@gmail.com'
+        USER_PASSWORD = 'Rabbit'
+        MAILHOG_URL = 'http://localhost:8025'
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -24,7 +33,7 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_AUTH_TOKEN')]) {
-                        sh 'cd servidor-empleados && npx sonar-scanner -Dsonar.token=${SONAR_AUTH_TOKEN}'
+                        sh 'cd servidor-empleados && sonar-scanner -Dsonar.token=${SONAR_AUTH_TOKEN}'
                     }
                 }
             }
@@ -78,18 +87,14 @@ pipeline {
                       sleep 5
                     done
 
-                    set -a
-                    if [ -f .env ]; then . ./.env; fi
-                    set +a
-
                     cd e2e-tests
                     npm install
-                    BASE_URL="${BASE_URL:-http://localhost:8085}" \
+                    BASE_URL="${BASE_URL}" \
                     ADMIN_EMAIL="${ADMIN_EMAIL}" \
                     ADMIN_PASSWORD="${ADMIN_PASSWORD}" \
                     USER_EMAIL="${USER_EMAIL}" \
                     USER_PASSWORD="${USER_PASSWORD}" \
-                    MAILHOG_URL="${MAILHOG_URL:-http://localhost:8025}" \
+                    MAILHOG_URL="${MAILHOG_URL}" \
                     npm test
                 '''
             }

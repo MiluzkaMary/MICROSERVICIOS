@@ -80,6 +80,11 @@ if [ -z "$SONAR_TOKEN" ]; then
   exit 1
 fi
 
+echo "Creando webhook para Jenkins..."
+api_post "$SONAR_AUTH" "/api/webhooks/create" \
+  -d "name=jenkins-webhook" \
+  -d "url=http://jenkins:8080/sonarqube-webhook/" >/dev/null || true
+
 echo "─────────────────────────────────────"
 echo "✅ SonarQube configurado correctamente"
 echo "SONAR_TOKEN=$SONAR_TOKEN"

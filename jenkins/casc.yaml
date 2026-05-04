@@ -56,7 +56,7 @@ jobs:
           }
         }
         triggers {
-          pollSCM('H/5 * * * *')
+          scm('H/5 * * * *')
         }
       }
   - script: |
@@ -76,6 +76,6 @@ jobs:
           }
         }
         triggers {
-          pollSCM('H/5 * * * *')
+          scm('H/5 * * * *')
         }
       }
