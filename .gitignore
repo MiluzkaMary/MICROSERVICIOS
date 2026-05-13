@@ -29,6 +29,12 @@ docker-compose.override.yml
 # Build output
 dist/
 build/
+target/
+bin/
+*.class
+*.jar
+*.war
+*.ear
 
 # Coverage and test artifacts
 coverage/
@@ -36,6 +42,8 @@ coverage/
 htmlcov/
 coverage.xml
 .coverage
+coverage.out
+*.coverprofile
 
 # Python virtual environments and caches
 .venv/
@@ -43,6 +51,13 @@ venv/
 __pycache__/
 *.py[cod]
 .pytest_cache/
+
+# Java / Maven / local tool caches
+.mvn/wrapper/maven-wrapper.jar
+.tools/
+*.zip
+*.tar.gz
+*.tgz
 
 # SonarQube scanner artifacts
 .scannerwork/
