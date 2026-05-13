@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>EmailService.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">servidor-notificaciones</a> &gt; <a href="index.source.html" class="el_package">com.empresa.notificaciones.service</a> &gt; <span class="el_source">EmailService.java</span></div><h1>EmailService.java</h1><pre class="source lang-java linenums">package com.empresa.notificaciones.service;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.mail.MailException;
+import org.springframework.mail.SimpleMailMessage;
+import org.springframework.mail.javamail.JavaMailSender;
+import org.springframework.stereotype.Service;
+
+@Service
+public class EmailService {
+
+<span class="fc" id="L14">    private static final Logger log = LoggerFactory.getLogger(EmailService.class);</span>
+
+    private final JavaMailSender mailSender;
+
+<span class="nc" id="L18">    public EmailService(JavaMailSender mailSender) {</span>
+<span class="nc" id="L19">        this.mailSender = mailSender;</span>
+<span class="nc" id="L20">    }</span>
+
+    @Value(&quot;${app.smtp.from:\&quot;Sistema RH\&quot; &lt;rh@empresa.com&gt;}&quot;)
+    private String from;
+
+    @Value(&quot;${app.auth.service-url:http://localhost:8084}&quot;)
+    private String authServiceUrl;
+
+    public boolean enviarEmail(String destinatario, String asunto, String mensaje) {
+        try {
+<span class="nc" id="L30">            SimpleMailMessage mail = new SimpleMailMessage();</span>
+<span class="nc" id="L31">            mail.setFrom(from);</span>
+<span class="nc" id="L32">            mail.setTo(destinatario);</span>
+<span class="nc" id="L33">            mail.setSubject(asunto);</span>
+<span class="nc" id="L34">            mail.setText(mensaje);</span>
+<span class="nc" id="L35">            mailSender.send(mail);</span>
+<span class="nc" id="L36">            log.info(&quot;✅ Email enviado a {}&quot;, destinatario);</span>
+<span class="nc" id="L37">            return true;</span>
+<span class="nc" id="L38">        } catch (MailException e) {</span>
+<span class="nc" id="L39">            log.warn(&quot;⚠️ No se pudo enviar email a {}: {}&quot;, destinatario, e.getMessage());</span>
+<span class="nc" id="L40">            return false;</span>
+        }
+    }
+
+    public boolean enviarBienvenida(String nombre, String email, String empleadoId) {
+<span class="nc" id="L45">        String asunto = &quot;¡Bienvenido a la empresa &quot; + nombre + &quot;!&quot;;</span>
+<span class="nc" id="L46">        String mensaje = String.format(&quot;&quot;&quot;</span>
+                ¡Bienvenido a la empresa %s!
+
+                Estamos emocionados de tenerte en el equipo.
+                Tu ID de empleado es: %s
+
+                Pronto recibirás más información sobre tu onboarding.
+
+                Equipo de Recursos Humanos&quot;&quot;&quot;, nombre, empleadoId);
+<span class="nc" id="L55">        return enviarEmail(email, asunto, mensaje);</span>
+    }
+
+    public boolean enviarDesvinculacion(String nombre, String email, String empleadoId, String motivo) {
+<span class="nc" id="L59">        String asunto = &quot;Finalización de relación laboral&quot;;</span>
+<span class="nc bnc" id="L60" title="All 4 branches missed.">        String mensajeMotivo = (motivo != null &amp;&amp; !motivo.isBlank()) ? &quot;\nMotivo: &quot; + motivo + &quot;\n&quot; : &quot;&quot;;</span>
+<span class="nc" id="L61">        String mensaje = String.format(&quot;&quot;&quot;</span>
+                Estimado/a %s,
+
+                Lamentamos informarte que tu relación laboral con la empresa ha sido desactivada.%s
+                Tu ID de empleado %s quedará inactivo temporalmente.
+
+                Te deseamos lo mejor en tus futuros proyectos.
+
+                Equipo de Recursos Humanos&quot;&quot;&quot;, nombre, mensajeMotivo, empleadoId);
+<span class="nc" id="L70">        return enviarEmail(email, asunto, mensaje);</span>
+    }
+
+    public boolean enviarVinculacion(String nombre, String email, String empleadoId) {
+<span class="nc" id="L74">        String asunto = &quot;Tu relación laboral ha sido reactivada&quot;;</span>
+<span class="nc" id="L75">        String mensaje = String.format(&quot;&quot;&quot;</span>
+                Hola %s,
+
+                Tu cuenta y tu perfil han sido reactivados correctamente.
+                Tu ID de empleado sigue siendo: %s
+
+                Ya puedes volver a usar tus credenciales habituales.
+
+<span class="nc bnc" id="L83" title="All 2 branches missed.">                Equipo de Recursos Humanos&quot;&quot;&quot;, nombre != null ? nombre : empleadoId, empleadoId);</span>
+<span class="nc" id="L84">        return enviarEmail(email, asunto, mensaje);</span>
+    }
+
+    public boolean enviarActivacion(String nombre, String email, String empleadoId, String token) {
+<span class="nc" id="L88">        String asunto = &quot;🔐 Activa tu cuenta - Sistema de Empleados&quot;;</span>
+<span class="nc" id="L89">        String mensaje = String.format(&quot;&quot;&quot;</span>
+                Hola %s,
+
+                Tu cuenta ha sido creada exitosamente.
+                Para activar tu cuenta usa el siguiente token:
+
+                Token: %s
+
+                Este token expira en 24 horas.
+
+                Endpoint: POST %s/auth/reset-password
+                Body: { &quot;token&quot;: &quot;%s&quot;, &quot;nuevaPassword&quot;: &quot;TuNuevaPassword123&quot; }
+
+                Equipo de Recursos Humanos&quot;&quot;&quot;,
+<span class="nc bnc" id="L103" title="All 2 branches missed.">                nombre != null ? nombre : empleadoId, token, authServiceUrl, token);</span>
+<span class="nc" id="L104">        return enviarEmail(email, asunto, mensaje);</span>
+    }
+
+    public boolean enviarRecuperacion(String email, String empleadoId, String token) {
+<span class="nc" id="L108">        String asunto = &quot;🔑 Recuperación de Contraseña - Sistema de Empleados&quot;;</span>
+<span class="nc" id="L109">        String mensaje = String.format(&quot;&quot;&quot;</span>
+                Hola,
+
+                Hemos recibido una solicitud para restablecer la contraseña de tu cuenta (%s).
+                Usa el siguiente token:
+
+                Token: %s
+
+                Este token expira en 24 horas.
+
+                Endpoint: POST %s/auth/reset-password
+                Body: { &quot;token&quot;: &quot;%s&quot;, &quot;nuevaPassword&quot;: &quot;TuNuevaPassword123&quot; }
+
+                Si no solicitaste este cambio, ignora este mensaje.
+
+                Equipo de Recursos Humanos&quot;&quot;&quot;, empleadoId, token, authServiceUrl, token);
+<span class="nc" id="L125">        return enviarEmail(email, asunto, mensaje);</span>
+    }
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

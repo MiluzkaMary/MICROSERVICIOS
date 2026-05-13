@@ -1,0 +1,97 @@
+pipeline {
+    agent any
+
+    options {
+        timeout(time: 60, unit: 'MINUTES')
+        timestamps()
+    }
+
+    environment {
+        NODE_VERSION = '18'
+        NPM_CACHE = '/root/.npm'
+    }
+
+    stages {
+        stage('Verificación de Herramientas') {
+            steps {
+                echo '✅ Verificando herramientas disponibles...'
+                sh 'node --version'
+                sh 'npm --version'
+                sh 'docker --version'
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                echo '📦 Clonando repositorio...'
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                echo '📚 Instalando dependencias para E2E tests...'
+                dir('e2e-tests') {
+                    sh 'npm install'
+                }
+            }
+        }
+
+        stage('Verificación de Configuración') {
+            steps {
+                echo '🔍 Verificando configuración de tests...'
+                sh '''
+                    if [ ! -f "e2e-tests/cucumber.js" ]; then
+                        echo "❌ ERROR: cucumber.js no encontrado"
+                        exit 1
+                    fi
+                    if [ ! -d "e2e-tests/features" ]; then
+                        echo "❌ ERROR: directorio features no encontrado"
+                        exit 1
+                    fi
+                    echo "✅ Configuración válida"
+                '''
+            }
+        }
+
+        stage('Construcción Docker') {
+            steps {
+                echo '🐳 Construyendo imagen Docker para E2E tests...'
+                sh 'docker build -t reto1-e2e-tests:latest ./e2e-tests/'
+                sh 'docker image ls | grep reto1-e2e-tests'
+            }
+        }
+
+        stage('Publicar Reporte de Tests') {
+            steps {
+                echo '📊 Publicando reportes de tests...'
+                publishHTML([
+                    reportDir: 'e2e-tests/reports',
+                    reportFiles: 'index.html',
+                    reportName: 'E2E Tests Report',
+                    keepAll: true,
+                    alwaysLinkToLastBuild: true
+                ]) || true
+            }
+        }
+    }
+
+    post {
+        always {
+            echo '📌 Fase de limpieza y reportes finales...'
+            
+            // Limpia artefactos anteriores
+            cleanWs(deleteDirs: true)
+        }
+
+        success {
+            echo '✅ Imagen E2E tests construida exitosamente'
+            echo '✅ Tests listos para ejecutar'
+        }
+
+        failure {
+            echo '❌ Pipeline falló'
+            echo '❌ Revisa la configuración de tests'
+        }
+    }
+}

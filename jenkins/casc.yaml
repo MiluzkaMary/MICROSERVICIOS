@@ -79,3 +79,103 @@ jobs:
           pollSCM('H/5 * * * *')
         }
       }
+  - script: |
+      pipelineJob('perfiles-ci') {
+        displayName('Servidor Perfiles — CI Pipeline')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/MiluzkaMary/MICROSERVICIOS.git')
+                }
+                branches('*/main')
+              }
+            }
+            scriptPath('servidor-perfiles/Jenkinsfile')
+          }
+        }
+        triggers {
+          pollSCM('H/5 * * * *')
+        }
+      }
+  - script: |
+      pipelineJob('notificaciones-ci') {
+        displayName('Servidor Notificaciones — CI Pipeline')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/MiluzkaMary/MICROSERVICIOS.git')
+                }
+                branches('*/main')
+              }
+            }
+            scriptPath('servidor-notificaciones/Jenkinsfile')
+          }
+        }
+        triggers {
+          pollSCM('H/5 * * * *')
+        }
+      }
+  - script: |
+      pipelineJob('auth-ci') {
+        displayName('Servidor Autenticación — CI Pipeline')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/MiluzkaMary/MICROSERVICIOS.git')
+                }
+                branches('*/main')
+              }
+            }
+            scriptPath('servidor-auth/Jenkinsfile')
+          }
+        }
+        triggers {
+          pollSCM('H/5 * * * *')
+        }
+      }
+  - script: |
+      pipelineJob('gateway-ci') {
+        displayName('API Gateway — CI Pipeline')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/MiluzkaMary/MICROSERVICIOS.git')
+                }
+                branches('*/main')
+              }
+            }
+            scriptPath('servidor-gateway/Jenkinsfile')
+          }
+        }
+        triggers {
+          pollSCM('H/5 * * * *')
+        }
+      }
+  - script: |
+      pipelineJob('e2e-tests-ci') {
+        displayName('E2E Tests — CI Pipeline')
+        definition {
+          cpsScm {
+            scm {
+              git {
+                remote {
+                  url('https://github.com/MiluzkaMary/MICROSERVICIOS.git')
+                }
+                branches('*/main')
+              }
+            }
+            scriptPath('e2e-tests/Jenkinsfile')
+          }
+        }
+        triggers {
+          pollSCM('H/5 * * * *')
+        }
+      }

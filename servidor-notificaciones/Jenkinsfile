@@ -1,0 +1,72 @@
+pipeline {
+    agent any
+
+    stages {
+        stage('Checkout') {
+            steps {
+                checkout scm
+            }
+        }
+
+        stage('Build') {
+            steps {
+                sh 'cd servidor-notificaciones && mvn clean compile -DskipTests'
+            }
+        }
+
+        stage('Test') {
+            steps {
+                sh 'cd servidor-notificaciones && mvn test'
+            }
+        }
+
+        stage('SonarQube') {
+            steps {
+                withSonarQubeEnv('SonarQube') {
+                    withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_AUTH_TOKEN')]) {
+                        sh '''
+                            cd servidor-notificaciones && \
+                            mvn sonar:sonar \
+                              -Dsonar.projectKey=servidor-notificaciones \
+                              -Dsonar.projectName=servidor-notificaciones \
+                              -Dsonar.token=${SONAR_AUTH_TOKEN} \
+                              -Dsonar.host.url=http://sonarqube:9000
+                        '''
+                    }
+                }
+            }
+        }
+
+        stage('Quality Gate') {
+            steps {
+                timeout(time: 5, unit: 'MINUTES') {
+                    waitForQualityGate abortPipeline: true
+                }
+            }
+        }
+
+        stage('Package') {
+            steps {
+                sh '''
+                    docker build \
+                      -f servidor-notificaciones/Dockerfile \
+                      -t servidor-notificaciones:${BUILD_NUMBER} \
+                      -t servidor-notificaciones:latest \
+                      servidor-notificaciones
+                '''
+            }
+        }
+    }
+
+    post {
+        always {
+            echo "Pipeline finalizado - Build #${BUILD_NUMBER}"
+        }
+        success {
+            echo '✅ Pipeline exitoso - Servidor Notificaciones listo'
+        }
+        failure {
+            echo '❌ Pipeline falló - revisa la etapa en rojo'
+        }
+    }
+}

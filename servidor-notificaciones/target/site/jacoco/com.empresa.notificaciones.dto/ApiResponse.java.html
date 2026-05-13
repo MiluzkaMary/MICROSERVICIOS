@@ -1,0 +1,139 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>ApiResponse.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">servidor-notificaciones</a> &gt; <a href="index.source.html" class="el_package">com.empresa.notificaciones.dto</a> &gt; <span class="el_source">ApiResponse.java</span></div><h1>ApiResponse.java</h1><pre class="source lang-java linenums">package com.empresa.notificaciones.dto;
+
+import java.time.LocalDateTime;
+import java.util.List;
+
+import com.fasterxml.jackson.annotation.JsonInclude;
+
+/**
+ * DTO de respuesta estandar para la API.
+ */
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public class ApiResponse&lt;T&gt; {
+
+    private boolean success;
+    private int statusCode;
+    private String message;
+    private T data;
+    private Long total;
+    private List&lt;String&gt; errors;
+    private String timestamp;
+
+<span class="fc" id="L22">    public ApiResponse() {</span>
+<span class="fc" id="L23">    }</span>
+
+<span class="nc" id="L25">    public ApiResponse(boolean success, int statusCode, String message, T data, Long total, List&lt;String&gt; errors, String timestamp) {</span>
+<span class="nc" id="L26">        this.success = success;</span>
+<span class="nc" id="L27">        this.statusCode = statusCode;</span>
+<span class="nc" id="L28">        this.message = message;</span>
+<span class="nc" id="L29">        this.data = data;</span>
+<span class="nc" id="L30">        this.total = total;</span>
+<span class="nc" id="L31">        this.errors = errors;</span>
+<span class="nc" id="L32">        this.timestamp = timestamp;</span>
+<span class="nc" id="L33">    }</span>
+
+    public static &lt;T&gt; ApiResponse&lt;T&gt; success(T data, int statusCode) {
+<span class="fc" id="L36">        ApiResponse&lt;T&gt; response = new ApiResponse&lt;&gt;();</span>
+<span class="fc" id="L37">        response.setSuccess(true);</span>
+<span class="fc" id="L38">        response.setStatusCode(statusCode);</span>
+<span class="fc" id="L39">        response.setData(data);</span>
+<span class="fc" id="L40">        response.setTimestamp(LocalDateTime.now().toString());</span>
+<span class="fc" id="L41">        return response;</span>
+    }
+
+    public static &lt;T&gt; ApiResponse&lt;T&gt; success(T data, int statusCode, long total) {
+<span class="nc" id="L45">        ApiResponse&lt;T&gt; response = new ApiResponse&lt;&gt;();</span>
+<span class="nc" id="L46">        response.setSuccess(true);</span>
+<span class="nc" id="L47">        response.setStatusCode(statusCode);</span>
+<span class="nc" id="L48">        response.setData(data);</span>
+<span class="nc" id="L49">        response.setTotal(total);</span>
+<span class="nc" id="L50">        response.setTimestamp(LocalDateTime.now().toString());</span>
+<span class="nc" id="L51">        return response;</span>
+    }
+
+    public static &lt;T&gt; ApiResponse&lt;T&gt; success(T data, int statusCode, String message) {
+<span class="fc" id="L55">        ApiResponse&lt;T&gt; response = new ApiResponse&lt;&gt;();</span>
+<span class="fc" id="L56">        response.setSuccess(true);</span>
+<span class="fc" id="L57">        response.setStatusCode(statusCode);</span>
+<span class="fc" id="L58">        response.setData(data);</span>
+<span class="fc" id="L59">        response.setMessage(message);</span>
+<span class="fc" id="L60">        response.setTimestamp(LocalDateTime.now().toString());</span>
+<span class="fc" id="L61">        return response;</span>
+    }
+
+    public static &lt;T&gt; ApiResponse&lt;T&gt; error(int statusCode, String message, List&lt;String&gt; errors) {
+<span class="nc" id="L65">        ApiResponse&lt;T&gt; response = new ApiResponse&lt;&gt;();</span>
+<span class="nc" id="L66">        response.setSuccess(false);</span>
+<span class="nc" id="L67">        response.setStatusCode(statusCode);</span>
+<span class="nc" id="L68">        response.setMessage(message);</span>
+<span class="nc" id="L69">        response.setErrors(errors);</span>
+<span class="nc" id="L70">        response.setTimestamp(LocalDateTime.now().toString());</span>
+<span class="nc" id="L71">        return response;</span>
+    }
+
+    public static &lt;T&gt; ApiResponse&lt;T&gt; error(int statusCode, String message) {
+<span class="fc" id="L75">        ApiResponse&lt;T&gt; response = new ApiResponse&lt;&gt;();</span>
+<span class="fc" id="L76">        response.setSuccess(false);</span>
+<span class="fc" id="L77">        response.setStatusCode(statusCode);</span>
+<span class="fc" id="L78">        response.setMessage(message);</span>
+<span class="fc" id="L79">        response.setTimestamp(LocalDateTime.now().toString());</span>
+<span class="fc" id="L80">        return response;</span>
+    }
+
+    public boolean isSuccess() {
+<span class="fc" id="L84">        return success;</span>
+    }
+
+    public void setSuccess(boolean success) {
+<span class="fc" id="L88">        this.success = success;</span>
+<span class="fc" id="L89">    }</span>
+
+    public int getStatusCode() {
+<span class="fc" id="L92">        return statusCode;</span>
+    }
+
+    public void setStatusCode(int statusCode) {
+<span class="fc" id="L96">        this.statusCode = statusCode;</span>
+<span class="fc" id="L97">    }</span>
+
+    public String getMessage() {
+<span class="fc" id="L100">        return message;</span>
+    }
+
+    public void setMessage(String message) {
+<span class="fc" id="L104">        this.message = message;</span>
+<span class="fc" id="L105">    }</span>
+
+    public T getData() {
+<span class="fc" id="L108">        return data;</span>
+    }
+
+    public void setData(T data) {
+<span class="fc" id="L112">        this.data = data;</span>
+<span class="fc" id="L113">    }</span>
+
+    public Long getTotal() {
+<span class="fc" id="L116">        return total;</span>
+    }
+
+    public void setTotal(Long total) {
+<span class="nc" id="L120">        this.total = total;</span>
+<span class="nc" id="L121">    }</span>
+
+    public List&lt;String&gt; getErrors() {
+<span class="fc" id="L124">        return errors;</span>
+    }
+
+    public void setErrors(List&lt;String&gt; errors) {
+<span class="nc" id="L128">        this.errors = errors;</span>
+<span class="nc" id="L129">    }</span>
+
+    public String getTimestamp() {
+<span class="fc" id="L132">        return timestamp;</span>
+    }
+
+    public void setTimestamp(String timestamp) {
+<span class="fc" id="L136">        this.timestamp = timestamp;</span>
+<span class="fc" id="L137">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

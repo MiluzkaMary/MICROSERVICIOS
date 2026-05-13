@@ -1,0 +1,102 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>SecurityConfig.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">servidor-notificaciones</a> &gt; <a href="index.source.html" class="el_package">com.empresa.notificaciones.config</a> &gt; <span class="el_source">SecurityConfig.java</span></div><h1>SecurityConfig.java</h1><pre class="source lang-java linenums">package com.empresa.notificaciones.config;
+
+import java.io.IOException;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
+import org.springframework.http.MediaType;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.AuthenticationEntryPoint;
+import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.AccessDeniedHandler;
+import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+
+import com.empresa.notificaciones.security.JwtAuthFilter;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import jakarta.servlet.http.HttpServletResponse;
+
+/**
+ * Configuración de Spring Security.
+ * Equivalente a la lógica de requiereAuth / requiereAdmin en authMiddleware.js.
+ *
+ * Rutas públicas (sin JWT):
+ *   GET  /health
+ *   GET  /api-docs/**
+ *   POST /notificaciones/evento/**
+ *
+ * Rutas protegidas solo ADMIN:
+ *   GET  /notificaciones          (lista paginada)
+ *   GET  /notificaciones/estadisticas/resumen
+ *
+ * Rutas protegidas autenticado:
+ *   GET  /notificaciones/{empleadoId}
+ */
+@Configuration
+@EnableWebSecurity
+<span class="fc" id="L41">public class SecurityConfig {</span>
+
+    @Bean
+    public AuthenticationEntryPoint restAuthenticationEntryPoint(ObjectMapper objectMapper) {
+<span class="fc" id="L45">        return (request, response, authException) -&gt; writeJsonError(</span>
+                response,
+                HttpServletResponse.SC_UNAUTHORIZED,
+                &quot;Token de autenticación no proporcionado. Incluya el header Authorization: Bearer &lt;token&gt;&quot;,
+                objectMapper
+        );
+    }
+
+    @Bean
+    public AccessDeniedHandler restAccessDeniedHandler(ObjectMapper objectMapper) {
+<span class="fc" id="L55">        return (request, response, accessDeniedException) -&gt; writeJsonError(</span>
+                response,
+                HttpServletResponse.SC_FORBIDDEN,
+                &quot;Acceso denegado. Este endpoint requiere permisos de administrador.&quot;,
+                objectMapper
+        );
+    }
+
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http,
+                                           JwtAuthFilter jwtAuthFilter,
+                                           AuthenticationEntryPoint restAuthenticationEntryPoint,
+                                           AccessDeniedHandler restAccessDeniedHandler) throws Exception {
+<span class="fc" id="L68">        http</span>
+<span class="fc" id="L69">            .csrf(AbstractHttpConfigurer::disable)</span>
+<span class="fc" id="L70">            .sessionManagement(sm -&gt; sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))</span>
+<span class="fc" id="L71">            .exceptionHandling(ex -&gt; ex</span>
+<span class="fc" id="L72">                .authenticationEntryPoint(restAuthenticationEntryPoint)</span>
+<span class="fc" id="L73">                .accessDeniedHandler(restAccessDeniedHandler)</span>
+            )
+<span class="fc" id="L75">            .authorizeHttpRequests(auth -&gt; auth</span>
+                // Rutas públicas
+<span class="fc" id="L77">                .requestMatchers(HttpMethod.GET,  &quot;/health&quot;).permitAll()</span>
+<span class="fc" id="L78">                .requestMatchers(HttpMethod.GET,  &quot;/api-docs/**&quot;).permitAll()</span>
+<span class="fc" id="L79">                .requestMatchers(HttpMethod.GET,  &quot;/api-docs.json&quot;).permitAll()</span>
+<span class="fc" id="L80">                .requestMatchers(HttpMethod.GET,  &quot;/swagger-ui/**&quot;).permitAll()</span>
+<span class="fc" id="L81">                .requestMatchers(HttpMethod.POST, &quot;/notificaciones/evento/**&quot;).permitAll()</span>
+                // Solo ADMIN
+<span class="fc" id="L83">                .requestMatchers(HttpMethod.GET,  &quot;/notificaciones&quot;).hasRole(&quot;ADMIN&quot;)</span>
+<span class="fc" id="L84">                .requestMatchers(HttpMethod.GET,  &quot;/notificaciones/estadisticas/resumen&quot;).hasRole(&quot;ADMIN&quot;)</span>
+                // Autenticado (cualquier rol)
+<span class="fc" id="L86">                .anyRequest().authenticated()</span>
+            )
+<span class="fc" id="L88">            .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);</span>
+
+<span class="fc" id="L90">        return http.build();</span>
+    }
+
+    private void writeJsonError(HttpServletResponse response, int status, String message, ObjectMapper objectMapper) throws IOException {
+<span class="fc" id="L94">        response.setStatus(status);</span>
+<span class="fc" id="L95">        response.setContentType(MediaType.APPLICATION_JSON_VALUE);</span>
+<span class="fc" id="L96">        response.setCharacterEncoding(&quot;UTF-8&quot;);</span>
+<span class="fc" id="L97">        response.getWriter().write(objectMapper.writeValueAsString(</span>
+<span class="fc" id="L98">                com.empresa.notificaciones.dto.ApiResponse.error(status, message)</span>
+        ));
+<span class="fc" id="L100">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

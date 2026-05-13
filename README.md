@@ -1,25 +1,32 @@
 # Sistema de Microservicios - Gestion de Empleados
 
 Sistema de gestion de empleados basado en microservicios, con arquitectura mixta:
-- Node.js + Express: empleados, auth, perfiles, notificaciones y gateway.
+- Node.js + Express: empleados, auth, notificaciones y gateway.
+- Go: perfiles.
 - Python + FastAPI: departamentos.
 - PostgreSQL por servicio.
 - RabbitMQ para mensajeria asincrona.
-- Docker Compose para orquestacion local y ejecucion de pruebas E2E.
+- Jenkins para CI/CD y Docker Compose para orquestacion local y ejecucion de pruebas E2E.
 
-## 1. Servicios actuales
+## 1. Integracion Continua (CI)
+
+La integracion continua (CI) es una practica que valida de forma automatica los cambios de codigo cada vez que se actualiza el repositorio. En este proyecto se usa para reducir errores de integracion entre microservicios, verificar compilacion y pruebas, y generar evidencia de calidad antes de pasar a despliegue.
+
+CI se integra aqui porque el sistema combina varios lenguajes y varios puntos de coordinacion: APIs HTTP, eventos RabbitMQ, pruebas E2E y analisis de calidad con SonarQube. Un pipeline automatizado permite comprobar todo eso de forma repetible.
+
+## 2. Servicios actuales
 
 - servidor-gateway (entrada externa)
 - servidor-empleados (Node.js)
 - servidor-auth (Node.js)
 - servidor-departamentos (Python/FastAPI)
-- servidor-perfiles (Node.js)
-- servidor-notificaciones (Node.js)
+- servidor-perfiles (Go)
+- servidor-notificaciones (Java/Spring Boot)
 - e2e-tests (Cucumber.js)
 
 Cada microservicio de dominio mantiene su propia base de datos PostgreSQL.
 
-## 2. Arquitectura y puertos
+## 3. Arquitectura y puertos
 
 Servicios de aplicacion:
 - empleados-service: 8080
@@ -40,7 +47,7 @@ Bases de datos:
 - notificaciones_db: localhost:5435
 - auth_db: localhost:5436
 
-## 3. Seguridad y autorizacion
+## 4. Seguridad y autorizacion
 
 - JWT emitido por auth en POST /auth/login.
 - Claims usados por los servicios: sub y role.
@@ -51,7 +58,7 @@ Reglas generales:
 - ADMIN: operaciones administrativas (crear, editar, desactivar, reactivar, estadisticas).
 - USER: operaciones autenticadas de lectura/consulta permitidas por ruta.
 
-## 4. Comunicacion entre servicios
+## 5. Comunicacion entre servicios
 
 HTTP sincronico:
 - servidor-empleados valida la existencia de departamento llamando a servidor-departamentos.
@@ -69,7 +76,7 @@ Consumidores:
 - perfiles-service: empleado.creado, empleado.eliminado, empleado.reactivado
 - notificaciones-service: empleado.creado, empleado.eliminado, empleado.reactivado, usuario.creado, usuario.recuperacion
 
-## 5. Flujo funcional principal
+## 6. Flujo funcional principal
 
 Alta de empleado:
 1. ADMIN crea empleado en servidor-empleados.
@@ -98,7 +105,7 @@ Recuperacion de password:
 3. notificaciones envia correo de recuperacion.
 4. Usuario ejecuta POST /auth/reset-password.
 
-## 6. Modelo de datos (estado actual)
+## 7. Modelo de datos (estado actual)
 
 Se estandarizo el campo id autoincremental en tablas principales con SERIAL.
 
@@ -112,7 +119,7 @@ Notas:
 - La recuperacion de password en auth es stateless con JWT.
 - No se persisten token_recuperacion ni token_expiracion en la tabla usuarios.
 
-## 7. Endpoints principales
+## 8. Endpoints principales
 
 Auth (/auth):
 - POST /auth/login
@@ -151,9 +158,9 @@ Notificaciones (/notificaciones):
 Gateway:
 - Entrada principal: http://localhost:8085
 
-## 8. Pruebas automatizadas
+## 9. Pruebas automatizadas
 
-### 8.1 Pruebas unitarias
+### 9.1 Pruebas unitarias
 
 servidor-empleados cuenta con una suite unitaria activa en tests/unit, incluyendo:
 - app
@@ -180,7 +187,7 @@ cd servidor-departamentos
 pytest -q
 ```
 
-### 8.2 Pruebas E2E con Cucumber
+### 9.2 Pruebas E2E con Cucumber
 
 La suite en e2e-tests valida onboarding, offboarding, seguridad y comportamiento del sistema atravesando el gateway.
 
@@ -194,7 +201,7 @@ Estado actual de la suite principal:
 - 19 escenarios
 - 47 pasos
 
-## 9. Limpieza automatica de datos E2E
+## 10. Limpieza automatica de datos E2E
 
 Al finalizar la suite E2E (hook AfterAll):
 1. Se eliminan los datos de prueba creados durante escenarios.
@@ -208,7 +215,7 @@ ALTER SEQUENCE empleados_id_seq RESTART WITH 6;
 
 En el proyecto, este ajuste se aplica de forma automatica tras el cleanup cuando existe secuencia serial en la tabla.
 
-## 10. Variables de entorno clave
+## 11. Variables de entorno clave
 
 Archivo raiz .env:
 - JWT_SECRET
@@ -226,7 +233,87 @@ Archivo raiz .env:
 - USER_EMAIL
 - USER_PASSWORD
 
-## 11. Ejecucion local
+## 12. Jenkins y CI/CD
+
+### 12.1 Acceso a Jenkins
+
+- URL local: http://localhost:9090
+- Credenciales por defecto: `admin` / `admin123`
+- El setup wizard de Jenkins esta deshabilitado por CasC para que el entorno arranque preconfigurado.
+
+### 12.2 Como levantar el sistema con Jenkins incluido
+
+1. Configura el archivo `.env` en la raiz.
+2. Levanta los servicios con Docker Compose.
+3. Asegurate de incluir Jenkins, SonarQube, RabbitMQ, Mailhog y todos los microservicios.
+
+```bash
+docker compose up --build -d
+```
+
+### 12.3 Como obtener la contraseña inicial de Jenkins
+
+En una instalacion clasica de Jenkins, la contraseña inicial se obtiene desde el archivo `initialAdminPassword` dentro del volumen de Jenkins.
+
+En este proyecto, Jenkins se arranca con Configuration as Code y la credencial por defecto ya queda definida como `admin / admin123`. Si necesitas verificar el secreto inicial del contenedor, puedes leerlo desde la ruta del volumen montado de Jenkins en la carpeta `jenkins_home/secrets/initialAdminPassword`.
+
+### 12.4 Como crear o importar los pipelines
+
+Los pipelines ya quedan creados automaticamente por `jenkins/casc.yaml`.
+
+Si necesitas recrearlos manualmente:
+1. En Jenkins, crea un nuevo job de tipo Pipeline.
+2. Selecciona `Pipeline script from SCM`.
+3. Usa el repositorio del proyecto.
+4. Define el `scriptPath` correcto:
+	- `servidor-empleados/Jenkinsfile`
+	- `servidor-auth/Jenkinsfile`
+	- `servidor-departamentos/Jenkinsfile`
+	- `servidor-perfiles/Jenkinsfile`
+	- `servidor-notificaciones/Jenkinsfile`
+	- `servidor-gateway/Jenkinsfile`
+	- `e2e-tests/Jenkinsfile`
+
+### 12.5 Como ejecutar un pipeline manualmente
+
+1. Entra a http://localhost:9090.
+2. Abre el job que quieras ejecutar.
+3. Haz clic en `Build Now`.
+4. Revisa la consola del build y los artefactos publicados.
+
+### 12.6 Etapas del pipeline y que verifica cada una
+
+- `Checkout`: descarga el codigo fuente correcto del repositorio.
+- `Verificación de herramientas`: comprueba que el agente tiene Node, Go, Java, Maven o Docker segun el servicio.
+- `Install Dependencies`: instala dependencias de Node o valida el entorno necesario.
+- `Build` o `Construcción Docker`: compila la aplicacion o construye la imagen del servicio.
+- `Pruebas Unitarias` o `Test`: ejecuta las pruebas automatizadas del servicio.
+- `Análisis de Cobertura`: genera reportes para evaluar cobertura.
+- `SonarQube`: ejecuta analisis estatico y calidad de codigo.
+- `Quality Gate`: bloquea el pipeline si la calidad no alcanza el umbral configurado.
+- `Verificación de Configuración`: valida archivos y rutas necesarias para el servicio o la suite E2E.
+- `Publicar Reporte de Tests`: deja visible el resultado de la ejecucion E2E.
+
+### 12.7 Como interpretar los resultados
+
+- Verde: la etapa paso correctamente y su validacion quedo satisfactoria.
+- Rojo: la etapa fallo y el pipeline se detuvo o marco error.
+- Amarillo o inestable: la etapa termino con advertencias o resultados parciales, normalmente asociados a tests fallidos o a pasos opcionales.
+
+Regla practica:
+- Verde en `Checkout`, `Build` y `Test` significa que el servicio sigue siendo compilable y verificable.
+- Rojo en `SonarQube` o `Quality Gate` significa que hay que revisar calidad, deuda tecnica o cobertura.
+- Rojo en `Test` significa que hay regresiones funcionales y debe corregirse antes de integrar.
+
+### 12.8 Capturas de pantalla de un pipeline exitoso
+
+Para documentacion visual, agrega capturas en una carpeta como `docs/screenshots/` y enlazalas desde aqui. Las capturas recomendadas son:
+- Vista general del job con estado verde.
+- Consola del build mostrando `SUCCESS`.
+- Etapa `Test` terminada correctamente.
+- Etapa `SonarQube` o `Quality Gate` en verde.
+
+## 13. Ejecucion local
 
 Levantar entorno:
 
@@ -247,7 +334,7 @@ docker compose down -v
 docker compose up --build -d
 ```
 
-## 12. Verificacion rapida
+## 14. Verificacion rapida
 
 Health checks:
 
@@ -266,7 +353,7 @@ Swagger:
 - notificaciones: http://localhost:8083/api-docs
 - auth: http://localhost:8084/api-docs
 
-## 13. Documentacion complementaria
+## 15. Documentacion complementaria
 
 - SECURITY.md
 - MESSAGE_BROKER_RABBITMQ.md

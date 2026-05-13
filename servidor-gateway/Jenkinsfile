@@ -1,0 +1,100 @@
+pipeline {
+    agent any
+
+    options {
+        timeout(time: 30, unit: 'MINUTES')
+        timestamps()
+    }
+
+    environment {
+        NODE_VERSION = '18'
+        NPM_CACHE = '/root/.npm'
+    }
+
+    stages {
+        stage('Verificación de Herramientas') {
+            steps {
+                echo '✅ Verificando herramientas disponibles...'
+                sh 'node --version'
+                sh 'npm --version'
+                sh 'docker --version'
+            }
+        }
+
+        stage('Checkout') {
+            steps {
+                echo '📦 Clonando repositorio...'
+                checkout scm
+            }
+        }
+
+        stage('Install Dependencies') {
+            steps {
+                echo '📚 Instalando dependencias...'
+                dir('servidor-gateway') {
+                    sh 'npm install'
+                }
+            }
+        }
+
+        stage('Validación de Configuración') {
+            steps {
+                echo '🔍 Validando configuración del Gateway...'
+                dir('servidor-gateway') {
+                    sh '''
+                        if [ ! -f "config/gateway.config.yml" ]; then
+                            echo "❌ ERROR: config/gateway.config.yml no encontrado"
+                            exit 1
+                        fi
+                        if [ ! -f "config/system.config.yml" ]; then
+                            echo "❌ ERROR: config/system.config.yml no encontrado"
+                            exit 1
+                        fi
+                        echo "✅ Configuración válida"
+                    '''
+                }
+            }
+        }
+
+        stage('Construcción Docker') {
+            steps {
+                echo '🐳 Construyendo imagen Docker de servidor-gateway...'
+                sh 'docker build -t reto1-gateway-service:latest ./servidor-gateway/'
+                sh 'docker image ls | grep reto1-gateway-service'
+            }
+        }
+
+        stage('Análisis SonarQube (Opcional)') {
+            when {
+                expression { 
+                    return fileExists('servidor-gateway/sonar-project.properties')
+                }
+            }
+            steps {
+                echo '🔍 Ejecutando análisis SonarQube...'
+                dir('servidor-gateway') {
+                    sh 'sonar-scanner || true'
+                }
+            }
+        }
+    }
+
+    post {
+        always {
+            echo '📌 Fase de limpieza y reportes finales...'
+            
+            // Limpia artefactos anteriores
+            cleanWs(deleteDirs: true)
+        }
+
+        success {
+            echo '✅ Pipeline ejecutado exitosamente'
+            echo '✅ Gateway listo para desplegar'
+        }
+
+        failure {
+            echo '❌ Pipeline falló'
+            echo '❌ Revisa los logs arriba para más detalles'
+        }
+    }
+}

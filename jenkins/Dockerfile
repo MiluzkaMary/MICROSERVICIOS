@@ -40,6 +40,20 @@ RUN apt-get update && \
     pip3 install --break-system-packages pytest pytest-cov && \
     rm -rf /var/lib/apt/lists/*
 
+# Instalar Go 1.22 para compilar servidor-perfiles
+RUN curl -sSLo /tmp/go.tar.gz https://go.dev/dl/go1.22.0.linux-amd64.tar.gz && \
+    apt-get update && \
+    apt-get install -y ca-certificates && \
+    tar -C /usr/local -xzf /tmp/go.tar.gz && \
+    rm /tmp/go.tar.gz && \
+    rm -rf /var/lib/apt/lists/*
+ENV PATH="${PATH}:/usr/local/go/bin"
+
+# Instalar Maven para compilar servidor-notificaciones
+RUN apt-get update && \
+    apt-get install -y maven && \
+    rm -rf /var/lib/apt/lists/*
+
 # Instalar Sonar Scanner CLI para análisis de calidad en pipelines
 RUN curl -sSLo /tmp/sonar-scanner.zip \
     https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip && \

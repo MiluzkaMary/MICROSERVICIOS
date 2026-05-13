@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>JwtAuthFilter.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">servidor-notificaciones</a> &gt; <a href="index.source.html" class="el_package">com.empresa.notificaciones.security</a> &gt; <span class="el_source">JwtAuthFilter.java</span></div><h1>JwtAuthFilter.java</h1><pre class="source lang-java linenums">package com.empresa.notificaciones.security;
+
+import java.io.IOException;
+import java.util.List;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.core.context.SecurityContextHolder;
+import org.springframework.stereotype.Component;
+import org.springframework.web.filter.OncePerRequestFilter;
+
+import com.empresa.notificaciones.dto.ApiResponse;
+import com.fasterxml.jackson.databind.ObjectMapper;
+
+import io.jsonwebtoken.ExpiredJwtException;
+import io.jsonwebtoken.JwtException;
+import jakarta.servlet.FilterChain;
+import jakarta.servlet.ServletException;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.servlet.http.HttpServletResponse;
+
+/**
+ * Filtro que valida el JWT en cada petición.
+ * Equivalente a requiereAuth() del middleware authMiddleware.js.
+ */
+@Component
+public class JwtAuthFilter extends OncePerRequestFilter {
+
+<span class="fc" id="L32">    private static final Logger log = LoggerFactory.getLogger(JwtAuthFilter.class);</span>
+
+    private final JwtUtil jwtUtil;
+    private final ObjectMapper objectMapper;
+
+<span class="fc" id="L37">    public JwtAuthFilter(JwtUtil jwtUtil, ObjectMapper objectMapper) {</span>
+<span class="fc" id="L38">        this.jwtUtil = jwtUtil;</span>
+<span class="fc" id="L39">        this.objectMapper = objectMapper;</span>
+<span class="fc" id="L40">    }</span>
+
+    @Override
+    protected void doFilterInternal(HttpServletRequest request,
+                                    HttpServletResponse response,
+                                    FilterChain filterChain)
+            throws ServletException, IOException {
+
+<span class="fc" id="L48">        String authHeader = request.getHeader(&quot;Authorization&quot;);</span>
+
+<span class="pc bpc" id="L50" title="1 of 4 branches missed.">        if (authHeader == null || !authHeader.startsWith(&quot;Bearer &quot;)) {</span>
+            // Sin token → dejar que Spring Security maneje el 401 si la ruta requiere auth
+<span class="fc" id="L52">            filterChain.doFilter(request, response);</span>
+<span class="fc" id="L53">            return;</span>
+        }
+
+<span class="fc" id="L56">        String token = authHeader.substring(7);</span>
+
+        try {
+<span class="fc" id="L59">            String subject = jwtUtil.getSubject(token);</span>
+<span class="fc" id="L60">            String role    = jwtUtil.getRole(token);</span>
+
+<span class="pc bpc" id="L62" title="1 of 2 branches missed.">            String springRole = &quot;ROLE_&quot; + (role != null ? role : &quot;USER&quot;);</span>
+<span class="fc" id="L63">            List&lt;SimpleGrantedAuthority&gt; authorities = List.of(new SimpleGrantedAuthority(springRole));</span>
+
+<span class="fc" id="L65">            UsernamePasswordAuthenticationToken auth =</span>
+                    new UsernamePasswordAuthenticationToken(subject, null, authorities);
+<span class="fc" id="L67">            SecurityContextHolder.getContext().setAuthentication(auth);</span>
+
+<span class="fc" id="L69">            filterChain.doFilter(request, response);</span>
+
+<span class="nc" id="L71">        } catch (ExpiredJwtException e) {</span>
+<span class="nc" id="L72">            log.warn(&quot;Token expirado: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L73">            writeError(response, 401, &quot;El token ha expirado. Inicia sesión nuevamente.&quot;);</span>
+<span class="nc" id="L74">        } catch (JwtException | IllegalArgumentException e) {</span>
+<span class="nc" id="L75">            log.warn(&quot;Token inválido: {}&quot;, e.getMessage());</span>
+<span class="nc" id="L76">            writeError(response, 401, &quot;Token inválido o malformado.&quot;);</span>
+<span class="pc" id="L77">        }</span>
+<span class="fc" id="L78">    }</span>
+
+    private void writeError(HttpServletResponse response, int status, String message) throws IOException {
+<span class="nc" id="L81">        response.setStatus(status);</span>
+<span class="nc" id="L82">        response.setContentType(MediaType.APPLICATION_JSON_VALUE);</span>
+<span class="nc" id="L83">        response.setCharacterEncoding(&quot;UTF-8&quot;);</span>
+<span class="nc" id="L84">        ApiResponse&lt;?&gt; body = ApiResponse.error(status, message);</span>
+<span class="nc" id="L85">        response.getWriter().write(objectMapper.writeValueAsString(body));</span>
+<span class="nc" id="L86">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>

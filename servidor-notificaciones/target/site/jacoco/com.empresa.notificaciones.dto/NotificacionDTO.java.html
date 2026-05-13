@@ -1,0 +1,89 @@
+<?xml version="1.0" encoding="UTF-8"?><!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd"><html xmlns="http://www.w3.org/1999/xhtml" lang="es"><head><meta http-equiv="Content-Type" content="text/html;charset=UTF-8"/><link rel="stylesheet" href="../jacoco-resources/report.css" type="text/css"/><link rel="shortcut icon" href="../jacoco-resources/report.gif" type="image/gif"/><title>NotificacionDTO.java</title><link rel="stylesheet" href="../jacoco-resources/prettify.css" type="text/css"/><script type="text/javascript" src="../jacoco-resources/prettify.js"></script></head><body onload="window['PR_TAB_WIDTH']=4;prettyPrint()"><div class="breadcrumb" id="breadcrumb"><span class="info"><a href="../jacoco-sessions.html" class="el_session">Sessions</a></span><a href="../index.html" class="el_report">servidor-notificaciones</a> &gt; <a href="index.source.html" class="el_package">com.empresa.notificaciones.dto</a> &gt; <span class="el_source">NotificacionDTO.java</span></div><h1>NotificacionDTO.java</h1><pre class="source lang-java linenums">package com.empresa.notificaciones.dto;
+
+import java.time.LocalDateTime;
+
+import com.fasterxml.jackson.annotation.JsonFormat;
+import com.empresa.notificaciones.model.Notificacion;
+
+public class NotificacionDTO {
+    private Long id;
+    private String tipo;
+    private String destinatario;
+    private String mensaje;
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = &quot;yyyy-MM-dd'T'HH:mm:ss&quot;)
+    private LocalDateTime fechaEnvio;
+    private String empleadoId;
+    private String estado;
+
+<span class="fc" id="L18">    public NotificacionDTO() {</span>
+<span class="fc" id="L19">    }</span>
+
+    public static NotificacionDTO from(Notificacion n) {
+<span class="fc" id="L22">        NotificacionDTO dto = new NotificacionDTO();</span>
+<span class="fc" id="L23">        dto.setId(n.getId());</span>
+<span class="pc bpc" id="L24" title="1 of 2 branches missed.">        dto.setTipo(n.getTipo() != null ? n.getTipo().name() : null);</span>
+<span class="fc" id="L25">        dto.setDestinatario(n.getDestinatario());</span>
+<span class="fc" id="L26">        dto.setMensaje(n.getMensaje());</span>
+<span class="fc" id="L27">        dto.setFechaEnvio(n.getFechaEnvio());</span>
+<span class="fc" id="L28">        dto.setEmpleadoId(n.getEmpleadoId());</span>
+<span class="pc bpc" id="L29" title="1 of 2 branches missed.">        dto.setEstado(n.getEstado() != null ? n.getEstado().name() : null);</span>
+<span class="fc" id="L30">        return dto;</span>
+    }
+
+    public Long getId() {
+<span class="fc" id="L34">        return id;</span>
+    }
+
+    public void setId(Long id) {
+<span class="fc" id="L38">        this.id = id;</span>
+<span class="fc" id="L39">    }</span>
+
+    public String getTipo() {
+<span class="fc" id="L42">        return tipo;</span>
+    }
+
+    public void setTipo(String tipo) {
+<span class="fc" id="L46">        this.tipo = tipo;</span>
+<span class="fc" id="L47">    }</span>
+
+    public String getDestinatario() {
+<span class="fc" id="L50">        return destinatario;</span>
+    }
+
+    public void setDestinatario(String destinatario) {
+<span class="fc" id="L54">        this.destinatario = destinatario;</span>
+<span class="fc" id="L55">    }</span>
+
+    public String getMensaje() {
+<span class="fc" id="L58">        return mensaje;</span>
+    }
+
+    public void setMensaje(String mensaje) {
+<span class="fc" id="L62">        this.mensaje = mensaje;</span>
+<span class="fc" id="L63">    }</span>
+
+    public LocalDateTime getFechaEnvio() {
+<span class="fc" id="L66">        return fechaEnvio;</span>
+    }
+
+    public void setFechaEnvio(LocalDateTime fechaEnvio) {
+<span class="fc" id="L70">        this.fechaEnvio = fechaEnvio;</span>
+<span class="fc" id="L71">    }</span>
+
+    public String getEmpleadoId() {
+<span class="fc" id="L74">        return empleadoId;</span>
+    }
+
+    public void setEmpleadoId(String empleadoId) {
+<span class="fc" id="L78">        this.empleadoId = empleadoId;</span>
+<span class="fc" id="L79">    }</span>
+
+    public String getEstado() {
+<span class="fc" id="L82">        return estado;</span>
+    }
+
+    public void setEstado(String estado) {
+<span class="fc" id="L86">        this.estado = estado;</span>
+<span class="fc" id="L87">    }</span>
+}
+</pre><div class="footer"><span class="right">Created with <a href="http://www.jacoco.org/jacoco">JaCoCo</a> 0.8.11.202310140853</span></div></body></html>
