@@ -301,6 +301,17 @@ services:
     networks:
       - microservicios-network
 
+  registry:
+    image: registry:2
+    container_name: docker-registry
+    restart: unless-stopped
+    ports:
+      - "5000:5000"
+    volumes:
+      - registry_data:/var/lib/registry
+    networks:
+      - microservicios-network
+
   # Express Gateway - API Gateway
   # Punto de entrada para todas las peticiones externas
   # Valida JWT en rutas protegidas antes de hacer proxy a los microservicios
@@ -415,3 +426,4 @@ volumes:
   sonarqube_logs:
   sonarqube_extensions:
   sonar_db_data:
+  registry_data:

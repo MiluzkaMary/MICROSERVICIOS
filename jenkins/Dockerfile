@@ -51,6 +51,17 @@ RUN apt-get update && \
     apt-get install -y maven && \
     rm -rf /var/lib/apt/lists/*
 
+# Instalar SonarScanner CLI para que pipelines (no sólo Maven) puedan ejecutar análisis
+RUN apt-get update && \
+    apt-get install -y unzip && \
+    SONAR_VERSION=4.8.0.2856 && \
+    curl -sSL https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-${SONAR_VERSION}-linux.zip -o /tmp/sonar-scanner.zip && \
+    unzip /tmp/sonar-scanner.zip -d /opt && \
+    mv /opt/sonar-scanner-${SONAR_VERSION}-linux /opt/sonar-scanner || true && \
+    ln -s /opt/sonar-scanner/bin/sonar-scanner /usr/local/bin/sonar-scanner || true && \
+    rm /tmp/sonar-scanner.zip && \
+    rm -rf /var/lib/apt/lists/*
+
 # Agregar usuario jenkins al grupo docker para poder usar el socket sin sudo
 RUN groupadd -f docker && usermod -aG docker jenkins
 

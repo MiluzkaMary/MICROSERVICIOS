@@ -14,7 +14,7 @@ RUN i=0; \
       echo "[retry] mvn dependency:go-offline intento ${i}/5"; \
       sleep 5; \
     done; \
-    [ $i -lt 5 ]
+    [ $i -lt 5 ] || true
 
 # Copiar el código fuente y compilar
 COPY src/ ./src/

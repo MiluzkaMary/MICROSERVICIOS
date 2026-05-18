@@ -251,6 +251,29 @@ Archivo raiz .env:
 docker compose up --build -d
 ```
 
+Nota: Para que los análisis a SonarQube funcionen desde Jenkins debes exportar la variable de entorno `SONAR_TOKEN` antes de levantar los servicios, por ejemplo:
+
+```bash
+export SONAR_TOKEN="squ_xxxxxxxxxxxxxxxxxxxx"
+docker compose up --build -d
+```
+
+También se incluye un registry Docker local accesible en `localhost:5000` para publicar imágenes desde los pipelines (etapa `Publish`).
+
+### 12.4 Configurar webhook de SonarQube → Jenkins
+
+Para que la etapa `waitForQualityGate` funcione correctamente, SonarQube debe notificar a Jenkins cuando termine el análisis. Hay un script incluido que crea el webhook automáticamente:
+
+```bash
+# Requiere `jq` y que SonarQube y Jenkins estén accesibles en las URLs indicadas
+export SONAR_TOKEN="squ_xxxxxxxxxxxxxxxxxxxx"
+export SONAR_HOST="http://localhost:9000"
+export JENKINS_URL="http://localhost:9090"
+./scripts/create-sonar-webhook.sh
+```
+
+Si prefieres, crea el webhook desde la interfaz SonarQube en **Administration → Configuration → Webhooks** apuntando a `http://<jenkins-url>/sonarqube-webhook/`.
+
 ### 12.3 Como obtener la contraseña inicial de Jenkins
 
 En una instalacion clasica de Jenkins, la contraseña inicial se obtiene desde el archivo `initialAdminPassword` dentro del volumen de Jenkins.

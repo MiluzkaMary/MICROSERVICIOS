@@ -66,3 +66,6 @@ __pycache__/
 # Local Jenkins folders (if created manually)
 jenkins_home/
 jenkins_data/
+
+
+reto6.md
