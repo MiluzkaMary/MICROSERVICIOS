@@ -25,7 +25,8 @@ pipeline {
                 sh '''
                     cd servidor-departamentos
                     . .venv/bin/activate
-                    pytest tests/ --cov=app --cov-report=xml --cov-report=term -v
+                    export PYTHONPATH="$(pwd)"
+                    python -m pytest tests/ --cov=app --cov-report=xml --cov-report=term -v
                 '''
             }
         }
