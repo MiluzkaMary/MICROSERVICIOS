@@ -10,13 +10,23 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'cd servidor-departamentos && pip3 install -r requirements.txt'
+                sh '''
+                    cd servidor-departamentos
+                    python3 -m venv .venv
+                    . .venv/bin/activate
+                    python -m pip install --upgrade pip
+                    pip install -r requirements.txt
+                '''
             }
         }
 
         stage('Test') {
             steps {
-                sh 'cd servidor-departamentos && pytest tests/ --cov=app --cov-report=xml --cov-report=term -v'
+                sh '''
+                    cd servidor-departamentos
+                    . .venv/bin/activate
+                    pytest tests/ --cov=app --cov-report=xml --cov-report=term -v
+                '''
             }
         }
 
@@ -24,7 +34,10 @@ pipeline {
             steps {
                 withSonarQubeEnv('SonarQube') {
                     withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_AUTH_TOKEN')]) {
-                        sh 'cd servidor-departamentos && sonar-scanner -Dsonar.token=${SONAR_AUTH_TOKEN}'
+                        sh '''
+                            cd servidor-departamentos
+                            sonar-scanner -Dsonar.token=${SONAR_AUTH_TOKEN}
+                        '''
                     }
                 }
             }

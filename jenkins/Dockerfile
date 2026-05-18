@@ -38,7 +38,7 @@ RUN curl -fsSL https://deb.nodesource.com/setup_18.x | bash - && \
 
 # Instalar Python y utilidades de testing para pipelines Python
 RUN apt-get update && \
-    apt-get install -y python3 python3-pip && \
+    apt-get install -y python3 python3-pip python3-venv && \
     pip3 install --break-system-packages pytest pytest-cov && \
     rm -rf /var/lib/apt/lists/*
 
