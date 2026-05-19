@@ -77,10 +77,34 @@ EOF
 
                     docker rm -f mailhog rabbitmq auth-app empleados-app departamentos-app perfiles-app notificaciones-app gateway-app empleados-postgres auth-postgres departamentos-postgres perfiles-postgres notificaciones-postgres docker-registry sonarqube sonar-db || true
 
-                    docker compose --env-file .ci.env up -d \
-                      --scale jenkins=0 \
-                      --scale sonarqube=0 \
-                      --scale sonar-db=0
+                                        docker compose --env-file .ci.env up -d database-empleados database-auth database-departamentos database-perfiles database-notificaciones rabbitmq mailhog
+
+                                        for i in $(seq 1 18); do
+                                            deps_ok=1
+                                            for svc in empleados-postgres auth-postgres departamentos-postgres perfiles-postgres notificaciones-postgres rabbitmq mailhog; do
+                                                status=$(docker inspect -f '{{.State.Health.Status}}' "$svc" 2>/dev/null || echo "starting")
+                                                if [ "$status" != "healthy" ]; then
+                                                    deps_ok=0
+                                                    break
+                                                fi
+                                            done
+
+                                            if [ "$deps_ok" -eq 1 ]; then
+                                                echo "Infraestructura lista para levantar aplicaciones."
+                                                break
+                                            fi
+
+                                            if [ "$i" -eq 18 ]; then
+                                                echo "Timeout esperando infraestructura base."
+                                                docker ps -a
+                                                exit 1
+                                            fi
+
+                                            echo "Esperando infraestructura base... intento $i/18"
+                                            sleep 5
+                                        done
+
+                                        docker compose --env-file .ci.env up -d --no-deps empleados-service auth-service departamentos-service perfiles-service notificaciones-service gateway-service
 
                     for i in $(seq 1 15); do
                       auth_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8084/health || true)
