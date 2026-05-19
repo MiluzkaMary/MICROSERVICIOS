@@ -55,6 +55,12 @@ pipeline {
                 sh '''
                     set -e
 
+                    set -a
+                    if [ -f .env ]; then . ./.env; fi
+                    set +a
+
+                    docker compose down --remove-orphans || true
+
                     docker compose up -d \
                       --scale jenkins=0 \
                       --scale sonarqube=0 \
@@ -78,10 +84,6 @@ pipeline {
                       sleep 5
                     done
 
-                    set -a
-                    if [ -f .env ]; then . ./.env; fi
-                    set +a
-
                     cd e2e-tests
                     npm install
                     BASE_URL="${BASE_URL:-http://localhost:8085}" \
@@ -96,8 +98,7 @@ pipeline {
             post {
                 always {
                     sh '''
-                        docker compose stop empleados-service auth-service departamentos-service \
-                          perfiles-service notificaciones-service gateway-service
+                        docker compose down -v --remove-orphans || true
                     '''
                 }
             }
