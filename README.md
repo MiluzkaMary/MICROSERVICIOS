@@ -268,11 +268,13 @@ Para que la etapa `waitForQualityGate` funcione correctamente, SonarQube debe no
 # Requiere `jq` y que SonarQube y Jenkins estén accesibles en las URLs indicadas
 export SONAR_TOKEN="squ_xxxxxxxxxxxxxxxxxxxx"
 export SONAR_HOST="http://localhost:9000"
-export JENKINS_URL="http://localhost:9090"
+export JENKINS_URL="http://jenkins:8080"
 ./scripts/create-sonar-webhook.sh
 ```
 
-Si prefieres, crea el webhook desde la interfaz SonarQube en **Administration → Configuration → Webhooks** apuntando a `http://<jenkins-url>/sonarqube-webhook/`.
+Si prefieres, crea el webhook desde la interfaz SonarQube en **Administration → Configuration → Webhooks** apuntando a `http://jenkins:8080/sonarqube-webhook/`.
+
+Nota: ver ese endpoint en navegador y recibir "This URL requires POST" es normal; el webhook funciona por peticiones POST enviadas por SonarQube.
 
 ### 12.3 Como obtener la contraseña inicial de Jenkins
 
