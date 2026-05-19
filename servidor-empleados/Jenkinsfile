@@ -73,38 +73,31 @@ USER_EMAIL=juan.solis@gmail.com
 USER_PASSWORD=Rabbit
 EOF
 
-                    docker compose --env-file .ci.env down --remove-orphans || true
+                                        set -a
+                                        . ./.ci.env
+                                        set +a
 
-                    docker rm -f mailhog rabbitmq auth-app empleados-app departamentos-app perfiles-app notificaciones-app gateway-app empleados-postgres auth-postgres departamentos-postgres perfiles-postgres notificaciones-postgres docker-registry sonarqube sonar-db || true
+                                        for i in $(seq 1 30); do
+                                            auth_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8084/health || true)
+                                            emp_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/health || true)
+                                            dep_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/health || true)
+                                            per_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8082/health || true)
+                                            noti_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8083/health || true)
+                                            gw_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8085/health || true)
 
-                                        docker compose --env-file .ci.env up -d database-empleados database-auth database-departamentos database-perfiles database-notificaciones rabbitmq mailhog
-
-                                        for i in $(seq 1 18); do
-                                            deps_ok=1
-                                            for svc in empleados-postgres auth-postgres departamentos-postgres perfiles-postgres notificaciones-postgres rabbitmq mailhog; do
-                                                status=$(docker inspect -f '{{.State.Health.Status}}' "$svc" 2>/dev/null || echo "starting")
-                                                if [ "$status" != "healthy" ]; then
-                                                    deps_ok=0
-                                                    break
-                                                fi
-                                            done
-
-                                            if [ "$deps_ok" -eq 1 ]; then
-                                                echo "Infraestructura lista para levantar aplicaciones."
+                                            if [ "$auth_code" = "200" ] && [ "$emp_code" = "200" ] && [ "$dep_code" = "200" ] && [ "$per_code" = "200" ] && [ "$noti_code" = "200" ] && [ "$gw_code" = "200" ]; then
+                                                echo "Stack base listo para E2E."
                                                 break
                                             fi
 
-                                            if [ "$i" -eq 18 ]; then
-                                                echo "Timeout esperando infraestructura base."
-                                                docker ps -a
+                                            if [ "$i" -eq 30 ]; then
+                                                echo "Timeout esperando que el stack base esté arriba. auth=$auth_code emp=$emp_code dep=$dep_code per=$per_code noti=$noti_code gw=$gw_code"
                                                 exit 1
                                             fi
 
-                                            echo "Esperando infraestructura base... intento $i/18"
+                                            echo "Esperando stack base... intento $i/30"
                                             sleep 5
                                         done
-
-                                        docker compose --env-file .ci.env up -d --no-deps empleados-service auth-service departamentos-service perfiles-service notificaciones-service gateway-service
 
                     for i in $(seq 1 15); do
                       auth_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8084/health || true)
@@ -137,9 +130,7 @@ EOF
             }
             post {
                 always {
-                    sh '''
-                        docker compose --env-file .ci.env down -v --remove-orphans || true
-                    '''
+                    sh 'rm -f .ci.env || true'
                 }
             }
         }
