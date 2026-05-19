@@ -1,7 +1,7 @@
 # ============================================
 # ETAPA 1: Build con Maven
 # ============================================
-FROM maven:3.9.6-eclipse-temurin-21-alpine AS builder
+FROM maven:3.9.6-eclipse-temurin-17-alpine AS builder
 
 WORKDIR /app
 
@@ -30,7 +30,7 @@ RUN i=0; \
 # ============================================
 # ETAPA 2: Runtime
 # ============================================
-FROM eclipse-temurin:21-jre-alpine AS production
+FROM eclipse-temurin:17-jre-alpine AS production
 
 # Crear usuario sin privilegios
 RUN addgroup -S appgroup && adduser -S appuser -G appgroup

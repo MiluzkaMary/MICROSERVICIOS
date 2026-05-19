@@ -20,6 +20,9 @@ ADMIN_EMAIL=admin@empresa.com
 ADMIN_PASSWORD=admin123
 USER_EMAIL=juan.solis@gmail.com
 USER_PASSWORD=Rabbit
+POLLING_MAX_ATTEMPTS=30
+POLLING_INTERVAL_MS=3000
+CUCUMBER_STEP_TIMEOUT_MS=120000
 ```
 
 ## Instrucciones paso a paso
@@ -54,6 +57,12 @@ Edita `.env` con tus valores locales.
 
 ```bash
 npm test
+```
+
+Si ejecutas por Docker Compose, reconstruye la imagen de pruebas cuando cambies steps, hooks o soporte:
+
+```bash
+docker compose --profile testing run --rm --build bdd-tests
 ```
 
 ## Escenarios implementados

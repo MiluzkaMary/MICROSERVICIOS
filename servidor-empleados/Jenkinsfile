@@ -124,6 +124,8 @@ EOF
                     ADMIN_PASSWORD="${ADMIN_PASSWORD}" \
                     USER_EMAIL="${USER_EMAIL}" \
                     USER_PASSWORD="${USER_PASSWORD}" \
+                    POLLING_MAX_ATTEMPTS="30" \
+                    POLLING_INTERVAL_MS="3000" \
                     MAILHOG_URL="${MAILHOG_URL:-http://localhost:8025}" \
                     npm test
                 '''

@@ -353,6 +353,9 @@ services:
       USER_EMAIL: ${USER_EMAIL}
       USER_PASSWORD: ${USER_PASSWORD}
       MAILHOG_URL: http://mailhog:8025
+      POLLING_MAX_ATTEMPTS: ${POLLING_MAX_ATTEMPTS:-30}
+      POLLING_INTERVAL_MS: ${POLLING_INTERVAL_MS:-3000}
+      CUCUMBER_STEP_TIMEOUT_MS: ${CUCUMBER_STEP_TIMEOUT_MS:-120000}
     networks:
       - microservicios-network
     profiles:

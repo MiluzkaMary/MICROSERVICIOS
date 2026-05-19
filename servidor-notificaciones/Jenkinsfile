@@ -10,13 +10,13 @@ pipeline {
 
         stage('Build') {
             steps {
-                sh 'cd servidor-notificaciones && mvn clean compile -DskipTests'
+                sh 'cd servidor-notificaciones && mvn clean compile -DskipTests -Djava.version=17 -Dmaven.compiler.release=17'
             }
         }
 
         stage('Test') {
             steps {
-                sh 'cd servidor-notificaciones && mvn test'
+                sh 'cd servidor-notificaciones && mvn test -Djava.version=17 -Dmaven.compiler.release=17'
             }
         }
 
@@ -30,6 +30,8 @@ pipeline {
                               -Dsonar.projectKey=servidor-notificaciones \
                               -Dsonar.projectName=servidor-notificaciones \
                               -Dsonar.token=${SONAR_AUTH_TOKEN} \
+                              -Djava.version=17 \
+                              -Dmaven.compiler.release=17 \
                               -Dsonar.host.url=http://sonarqube:9000
                         '''
                     }

@@ -1,7 +1,21 @@
 const { Before, After, AfterAll, AfterStep, setDefaultTimeout } = require('@cucumber/cucumber');
 const { cleanupE2eTestData } = require('./dbCleanup');
 
-setDefaultTimeout(30000);
+function toPositiveInt(value, fallback) {
+  const n = Number.parseInt(value, 10);
+  return Number.isFinite(n) && n > 0 ? n : fallback;
+}
+
+// El timeout por paso debe cubrir el peor caso del polling para evitar falsos negativos en CI.
+const pollingAttempts = toPositiveInt(process.env.POLLING_MAX_ATTEMPTS, 12);
+const pollingIntervalMs = toPositiveInt(process.env.POLLING_INTERVAL_MS, 2000);
+const pollingBudgetMs = pollingAttempts * pollingIntervalMs;
+const configuredStepTimeoutMs = toPositiveInt(process.env.CUCUMBER_STEP_TIMEOUT_MS, 0);
+const stepTimeoutMs = configuredStepTimeoutMs > 0
+  ? configuredStepTimeoutMs
+  : Math.max(30000, pollingBudgetMs + 10000);
+
+setDefaultTimeout(stepTimeoutMs);
 
 function crearMapaPasos(gherkinDocument) {
   const mapa = new Map();
