@@ -55,13 +55,29 @@ pipeline {
                 sh '''
                     set -e
 
-                    set -a
-                    if [ -f .env ]; then . ./.env; fi
-                    set +a
+                    cat > .ci.env <<'EOF'
+JWT_SECRET=ci-jwt-secret-for-jenkins
+JWT_EXPIRATION=24h
+JWT_EXPIRES_IN=24h
+DB_USER=postgres
+DB_PASSWORD=postgres
+RABBITMQ_USER=guest
+RABBITMQ_PASSWORD=guest
+AUTH_SERVICE_URL=http://auth-service:8084
+SMTP_HOST=mailhog
+SMTP_PORT=1025
+SMTP_FROM=Sistema RH <rh@empresa.com>
+ADMIN_EMAIL=admin@empresa.com
+ADMIN_PASSWORD=admin123
+USER_EMAIL=juan.solis@gmail.com
+USER_PASSWORD=Rabbit
+EOF
 
-                    docker compose down --remove-orphans || true
+                    docker compose --env-file .ci.env down --remove-orphans || true
 
-                    docker compose up -d \
+                    docker rm -f mailhog rabbitmq auth-app empleados-app departamentos-app perfiles-app notificaciones-app gateway-app empleados-postgres auth-postgres departamentos-postgres perfiles-postgres notificaciones-postgres docker-registry sonarqube sonar-db || true
+
+                    docker compose --env-file .ci.env up -d \
                       --scale jenkins=0 \
                       --scale sonarqube=0 \
                       --scale sonar-db=0
@@ -98,7 +114,7 @@ pipeline {
             post {
                 always {
                     sh '''
-                        docker compose down -v --remove-orphans || true
+                        docker compose --env-file .ci.env down -v --remove-orphans || true
                     '''
                 }
             }
