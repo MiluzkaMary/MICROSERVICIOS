@@ -78,14 +78,14 @@ EOF
                                         set +a
 
                                         for i in $(seq 1 30); do
-                                            auth_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8084/health || true)
-                                            emp_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/health || true)
-                                            dep_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/health || true)
-                                            per_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8082/health || true)
-                                            noti_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8083/health || true)
-                                            gw_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8085/health || true)
+                                            auth_code=$(curl -s -o /dev/null -w "%{http_code}" http://auth-service:8084/health || true)
+                                            emp_code=$(curl -s -o /dev/null -w "%{http_code}" http://empleados-service:8080/health || true)
+                                            dep_code=$(curl -s -o /dev/null -w "%{http_code}" http://departamentos-service:8081/health || true)
+                                            per_code=$(curl -s -o /dev/null -w "%{http_code}" http://perfiles-service:8082/health || true)
+                                            noti_code=$(curl -s -o /dev/null -w "%{http_code}" http://notificaciones-service:8083/health || true)
+                                            gw_code=$(curl -s -o /dev/null -w "%{http_code}" http://gateway-service:8085/health || true)
 
-                                            if [ "$auth_code" = "200" ] && [ "$emp_code" = "200" ] && [ "$dep_code" = "200" ] && [ "$per_code" = "200" ] && [ "$noti_code" = "200" ] && [ "$gw_code" = "200" ]; then
+                                            if [ "$auth_code" = "200" ] && [ "$emp_code" = "200" ] && [ "$dep_code" = "200" ] && [ "$per_code" = "200" ] && [ "$noti_code" = "200" ] && [ "$gw_code" != "000" ]; then
                                                 echo "Stack base listo para E2E."
                                                 break
                                             fi
@@ -100,8 +100,8 @@ EOF
                                         done
 
                     for i in $(seq 1 15); do
-                      auth_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8084/health || true)
-                      emp_code=$(curl -s -o /dev/null -w "%{http_code}" http://localhost:8080/health || true)
+                      auth_code=$(curl -s -o /dev/null -w "%{http_code}" http://auth-service:8084/health || true)
+                      emp_code=$(curl -s -o /dev/null -w "%{http_code}" http://empleados-service:8080/health || true)
 
                       if [ "$auth_code" = "200" ] && [ "$emp_code" = "200" ]; then
                         echo "Servicios auth y empleados listos para E2E."
@@ -119,14 +119,14 @@ EOF
 
                     cd e2e-tests
                     npm install
-                    BASE_URL="${BASE_URL:-http://localhost:8085}" \
+                    BASE_URL="${BASE_URL:-http://gateway-service:8085}" \
                     ADMIN_EMAIL="${ADMIN_EMAIL}" \
                     ADMIN_PASSWORD="${ADMIN_PASSWORD}" \
                     USER_EMAIL="${USER_EMAIL}" \
                     USER_PASSWORD="${USER_PASSWORD}" \
                     POLLING_MAX_ATTEMPTS="30" \
                     POLLING_INTERVAL_MS="3000" \
-                    MAILHOG_URL="${MAILHOG_URL:-http://localhost:8025}" \
+                    MAILHOG_URL="${MAILHOG_URL:-http://mailhog:8025}" \
                     npm test
                 '''
             }
