@@ -58,7 +58,7 @@ pipeline {
                     reportName: 'Code Coverage Report - servidor-auth',
                     keepAll: true,
                     alwaysLinkToLastBuild: true
-                ]) || true
+                ])
             }
         }
 
