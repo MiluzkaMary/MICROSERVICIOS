@@ -1,5 +1,7 @@
-const { Before, After, AfterAll, AfterStep, setDefaultTimeout } = require('@cucumber/cucumber');
+const { Before, BeforeAll, After, AfterAll, AfterStep, setDefaultTimeout } = require('@cucumber/cucumber');
+const axios = require('axios');
 const { cleanupE2eTestData } = require('./dbCleanup');
+const { esperarHastaQue } = require('./polling');
 
 function toPositiveInt(value, fallback) {
   const n = Number.parseInt(value, 10);
@@ -40,6 +42,34 @@ Before(function () {
   this.lastCreatedDepartamento = null;
   this.lastRecoveryToken = null;
   this._stepTextByAstId = new Map();
+});
+
+BeforeAll(async function () {
+  const baseUrl = process.env.BASE_URL || 'http://localhost:8085';
+  const http = axios.create({
+    baseURL: baseUrl,
+    validateStatus: () => true
+  });
+
+  await esperarHastaQue(async () => {
+    const respuesta = await http.post('/auth/login', {
+      email: process.env.ADMIN_EMAIL || '',
+      password: process.env.ADMIN_PASSWORD || ''
+    });
+
+    if (respuesta.status === 200 && respuesta.data && respuesta.data.token) {
+      return true;
+    }
+
+    if ([502, 503, 504].includes(respuesta.status)) {
+      throw new Error(`Gateway no listo (${respuesta.status})`);
+    }
+
+    throw new Error(`Auth no disponible todavía (${respuesta.status})`);
+  }, {
+    maxIntentos: process.env.AUTH_LOGIN_MAX_ATTEMPTS,
+    intervaloMs: process.env.AUTH_LOGIN_INTERVAL_MS
+  });
 });
 
 Before(function ({ pickle, gherkinDocument }) {

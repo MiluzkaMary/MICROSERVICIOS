@@ -2,6 +2,7 @@ const path = require('path');
 const { setWorldConstructor } = require('@cucumber/cucumber');
 const axios = require('axios');
 const dotenv = require('dotenv');
+const { esperarHastaQue } = require('./polling');
 
 dotenv.config({ path: path.resolve(__dirname, '../.env') });
 
@@ -37,7 +38,31 @@ class ProyectoWorld {
       ? this.adminCredentials
       : this.userCredentials;
 
-    const respuesta = await this.http.post('/auth/login', credentials);
+    const respuesta = await esperarHastaQue(async () => {
+      try {
+        const current = await this.http.post('/auth/login', credentials);
+
+        if (current.status === 200 && current.data && current.data.token) {
+          return current;
+        }
+
+        if ([502, 503, 504].includes(current.status)) {
+          throw new Error(`Gateway no listo (${current.status})`);
+        }
+
+        throw new Error(`No fue posible autenticar como ${rol}. Respuesta: ${JSON.stringify(current.data)}`);
+      } catch (error) {
+        if (error.response && [502, 503, 504].includes(error.response.status)) {
+          throw new Error(`Gateway no listo (${error.response.status})`);
+        }
+
+        throw error;
+      }
+    }, {
+      maxIntentos: process.env.AUTH_LOGIN_MAX_ATTEMPTS,
+      intervaloMs: process.env.AUTH_LOGIN_INTERVAL_MS
+    });
+
     this.response = {
       status: respuesta.status,
       data: respuesta.data,

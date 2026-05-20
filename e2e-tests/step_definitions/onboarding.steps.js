@@ -76,6 +76,19 @@ async function consultarNotificacionesEmpleado(world, empleadoId) {
   return respuesta;
 }
 
+function extraerItemsNotificaciones(respuesta) {
+  const items = respuesta.data && respuesta.data.data ? respuesta.data.data : respuesta.data;
+  return Array.isArray(items) ? items : [];
+}
+
+async function esperarNotificacionTipo(world, empleadoId, tipoEsperado) {
+  return esperarHastaQue(async () => {
+    const respuesta = await consultarNotificacionesEmpleado(world, empleadoId);
+    const items = extraerItemsNotificaciones(respuesta);
+    return items.some((item) => String(item.tipo).toUpperCase() === tipoEsperado);
+  });
+}
+
 async function obtenerTokenDesdeMailhog(email) {
   const mailhogBaseUrl = process.env.MAILHOG_URL || 'http://localhost:8025';
   const respuesta = await fetch(`${mailhogBaseUrl}/api/v2/messages`);
@@ -173,11 +186,7 @@ When('intento crear un empleado con nombre {string}, email {string}, departament
 Then('eventualmente el servicio de auth debe tener un usuario para el empleado creado', async function () {
   assert.ok(this.lastCreatedEmpleado, 'No existe un empleado creado para verificar auth');
 
-  await esperarHastaQue(async () => {
-    const respuesta = await consultarNotificacionesEmpleado(this, this.lastCreatedEmpleado.id);
-    const items = respuesta.data && respuesta.data.data ? respuesta.data.data : respuesta.data;
-    return Array.isArray(items) && items.length > 0;
-  });
+  await esperarNotificacionTipo(this, this.lastCreatedEmpleado.id, 'ACTIVACION');
 
   assert.equal(this.response.status, 200);
 });
@@ -185,11 +194,7 @@ Then('eventualmente el servicio de auth debe tener un usuario para el empleado c
 Then('eventualmente debe existir una notificacion para el empleado creado', async function () {
   assert.ok(this.lastCreatedEmpleado, 'No existe un empleado creado para verificar notificaciones');
 
-  await esperarHastaQue(async () => {
-    const respuesta = await consultarNotificacionesEmpleado(this, this.lastCreatedEmpleado.id);
-    const items = respuesta.data && respuesta.data.data ? respuesta.data.data : respuesta.data;
-    return Array.isArray(items) && items.length > 0;
-  });
+  await esperarNotificacionTipo(this, this.lastCreatedEmpleado.id, 'BIENVENIDA');
 
   assert.equal(this.response.status, 200);
 });
