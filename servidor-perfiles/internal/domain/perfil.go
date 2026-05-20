@@ -1,6 +1,12 @@
 package domain
 
-import "time"
+import (
+	"encoding/json"
+	"fmt"
+	"strconv"
+	"strings"
+	"time"
+)
 
 type Perfil struct {
 	ID                 int64     `json:"id"`
@@ -27,6 +33,47 @@ type EventoEmpleadoCreado struct {
 	EmpleadoID string `json:"empleadoId"`
 	Nombre     string `json:"nombre"`
 	Email      string `json:"email"`
+}
+
+func (e *EventoEmpleadoCreado) UnmarshalJSON(data []byte) error {
+	var raw map[string]json.RawMessage
+	if err := json.Unmarshal(data, &raw); err != nil {
+		return err
+	}
+
+	if rawEmpleadoID, ok := raw["empleadoId"]; ok {
+		if len(rawEmpleadoID) == 0 || string(rawEmpleadoID) == "null" {
+			e.EmpleadoID = ""
+		} else if rawEmpleadoID[0] == '"' {
+			if err := json.Unmarshal(rawEmpleadoID, &e.EmpleadoID); err != nil {
+				return err
+			}
+		} else {
+			var numericEmpleadoID float64
+			if err := json.Unmarshal(rawEmpleadoID, &numericEmpleadoID); err != nil {
+				return err
+			}
+			if numericEmpleadoID == float64(int64(numericEmpleadoID)) {
+				e.EmpleadoID = strconv.FormatInt(int64(numericEmpleadoID), 10)
+			} else {
+				e.EmpleadoID = strings.TrimRight(strings.TrimRight(fmt.Sprintf("%f", numericEmpleadoID), "0"), ".")
+			}
+		}
+	}
+
+	if rawNombre, ok := raw["nombre"]; ok {
+		if err := json.Unmarshal(rawNombre, &e.Nombre); err != nil {
+			return err
+		}
+	}
+
+	if rawEmail, ok := raw["email"]; ok {
+		if err := json.Unmarshal(rawEmail, &e.Email); err != nil {
+			return err
+		}
+	}
+
+	return nil
 }
 
 type ListOptions struct {

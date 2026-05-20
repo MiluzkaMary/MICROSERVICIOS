@@ -31,7 +31,17 @@ func (f *fakeProcessor) ReactivateProfile(context.Context, string) domain.APIRes
 func TestHandleEmpleadoCreado(t *testing.T) {
 	processor := &fakeProcessor{createResult: domain.APIResponse{Success: true, StatusCode: 201}}
 	consumer := &Consumer{service: processor}
-	body, _ := json.Marshal(domain.EventoEmpleadoCreado{EmpleadoID: "E001", Nombre: "Juan", Email: "juan@empresa.com"})
+	body, _ := json.Marshal(map[string]any{"empleadoId": 1001, "nombre": "Juan", "email": "juan@empresa.com"})
+
+	if err := consumer.handleEmpleadoCreado(context.Background(), body); err != nil {
+		t.Fatalf("unexpected error: %v", err)
+	}
+}
+
+func TestHandleEmpleadoCreadoAcceptsStringEmployeeID(t *testing.T) {
+	processor := &fakeProcessor{createResult: domain.APIResponse{Success: true, StatusCode: 201}}
+	consumer := &Consumer{service: processor}
+	body, _ := json.Marshal(map[string]any{"empleadoId": "E001", "nombre": "Juan", "email": "juan@empresa.com"})
 
 	if err := consumer.handleEmpleadoCreado(context.Background(), body); err != nil {
 		t.Fatalf("unexpected error: %v", err)
