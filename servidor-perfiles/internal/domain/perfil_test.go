@@ -1,6 +1,8 @@
 package domain
 
 import (
+	"encoding/json"
+	"reflect"
 	"testing"
 	"time"
 )
@@ -93,6 +95,81 @@ func TestEventoEmpleadoCreadoStructure(t *testing.T) {
 	}
 	if evento.Email != "juan@example.com" {
 		t.Errorf("Expected Email juan@example.com, got %s", evento.Email)
+	}
+}
+
+func TestEventoEmpleadoCreadoUnmarshalJSON(t *testing.T) {
+	tests := []struct {
+		name    string
+		payload string
+		want    EventoEmpleadoCreado
+	}{
+		{
+			name:    "numeric employee id",
+			payload: `{"empleadoId":1001,"nombre":"Juan Pérez","email":"juan@example.com"}`,
+			want:    EventoEmpleadoCreado{EmpleadoID: "1001", Nombre: "Juan Pérez", Email: "juan@example.com"},
+		},
+		{
+			name:    "string employee id",
+			payload: `{"empleadoId":"E001","nombre":"Juan Pérez","email":"juan@example.com"}`,
+			want:    EventoEmpleadoCreado{EmpleadoID: "E001", Nombre: "Juan Pérez", Email: "juan@example.com"},
+		},
+		{
+			name:    "decimal employee id",
+			payload: `{"empleadoId":1001.5,"nombre":"Juan Pérez","email":"juan@example.com"}`,
+			want:    EventoEmpleadoCreado{EmpleadoID: "1001.5", Nombre: "Juan Pérez", Email: "juan@example.com"},
+		},
+		{
+			name:    "null employee id",
+			payload: `{"empleadoId":null,"nombre":"Juan Pérez","email":"juan@example.com"}`,
+			want:    EventoEmpleadoCreado{EmpleadoID: "", Nombre: "Juan Pérez", Email: "juan@example.com"},
+		},
+		{
+			name:    "missing employee id",
+			payload: `{"nombre":"Juan Pérez","email":"juan@example.com"}`,
+			want:    EventoEmpleadoCreado{EmpleadoID: "", Nombre: "Juan Pérez", Email: "juan@example.com"},
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var evento EventoEmpleadoCreado
+			if err := json.Unmarshal([]byte(tt.payload), &evento); err != nil {
+				t.Fatalf("unexpected error: %v", err)
+			}
+
+			if !reflect.DeepEqual(evento, tt.want) {
+				t.Fatalf("unexpected event: got %+v want %+v", evento, tt.want)
+			}
+		})
+	}
+}
+
+func TestEventoEmpleadoCreadoUnmarshalJSONRejectsInvalidJSON(t *testing.T) {
+	var evento EventoEmpleadoCreado
+	if err := json.Unmarshal([]byte(`{"empleadoId":`), &evento); err == nil {
+		t.Fatal("expected error for invalid JSON")
+	}
+}
+
+func TestEventoEmpleadoCreadoUnmarshalJSONRejectsInvalidNumericEmployeeID(t *testing.T) {
+	var evento EventoEmpleadoCreado
+	if err := json.Unmarshal([]byte(`{"empleadoId":{},"nombre":"Juan Pérez","email":"juan@example.com"}`), &evento); err == nil {
+		t.Fatal("expected error for invalid numeric employee id payload")
+	}
+}
+
+func TestEventoEmpleadoCreadoUnmarshalJSONRejectsInvalidNombrePayload(t *testing.T) {
+	var evento EventoEmpleadoCreado
+	if err := json.Unmarshal([]byte(`{"empleadoId":1001,"nombre":{},"email":"juan@example.com"}`), &evento); err == nil {
+		t.Fatal("expected error for invalid nombre payload")
+	}
+}
+
+func TestEventoEmpleadoCreadoUnmarshalJSONRejectsInvalidEmailPayload(t *testing.T) {
+	var evento EventoEmpleadoCreado
+	if err := json.Unmarshal([]byte(`{"empleadoId":1001,"nombre":"Juan Pérez","email":{}}`), &evento); err == nil {
+		t.Fatal("expected error for invalid email payload")
 	}
 }
 
