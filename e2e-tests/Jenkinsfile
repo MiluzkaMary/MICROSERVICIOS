@@ -66,12 +66,13 @@ pipeline {
             steps {
                 echo '📊 Publicando reportes de tests...'
                 publishHTML([
+                    allowMissing: true,
                     reportDir: 'e2e-tests/reports',
                     reportFiles: 'index.html',
                     reportName: 'E2E Tests Report',
                     keepAll: true,
                     alwaysLinkToLastBuild: true
-                ]) || true
+                ])
             }
         }
     }
