@@ -41,9 +41,49 @@ class NotificacionEventConsumerTest {
         when(service.procesarEmpleadoCreado("E001", "Juan", "juan@empresa.com"))
                 .thenThrow(new IllegalStateException("boom"));
 
-        assertThrows(RuntimeException.class, () ->
+        assertThrows(NotificacionEventProcessingException.class, () ->
                 consumer.onEmpleadoCreado(objectMapper.readTree("{\"empleadoId\":\"E001\",\"nombre\":\"Juan\",\"email\":\"juan@empresa.com\"}")));
     }
+
+        @Test
+        void shouldRethrowWhenEmpleadoEliminadoProcessingFails() throws Exception {
+        NotificacionEventConsumer consumer = new NotificacionEventConsumer(service);
+        when(service.procesarEmpleadoDesvinculado("E001", "Juan", "juan@empresa.com", null))
+            .thenThrow(new IllegalStateException("boom"));
+
+        assertThrows(NotificacionEventProcessingException.class, () ->
+            consumer.onEmpleadoEliminado(objectMapper.readTree("{\"empleadoId\":\"E001\",\"nombre\":\"Juan\",\"email\":\"juan@empresa.com\"}")));
+        }
+
+        @Test
+        void shouldRethrowWhenEmpleadoReactivadoProcessingFails() throws Exception {
+        NotificacionEventConsumer consumer = new NotificacionEventConsumer(service);
+        when(service.procesarEmpleadoReactivado("E001", "Juan", "juan@empresa.com"))
+            .thenThrow(new IllegalStateException("boom"));
+
+        assertThrows(NotificacionEventProcessingException.class, () ->
+            consumer.onEmpleadoReactivado(objectMapper.readTree("{\"empleadoId\":\"E001\",\"nombre\":\"Juan\",\"email\":\"juan@empresa.com\"}")));
+        }
+
+        @Test
+        void shouldRethrowWhenUsuarioCreadoProcessingFails() throws Exception {
+        NotificacionEventConsumer consumer = new NotificacionEventConsumer(service);
+        when(service.procesarUsuarioCreado("E001", "juan@empresa.com", "abc", "Juan"))
+            .thenThrow(new IllegalStateException("boom"));
+
+        assertThrows(NotificacionEventProcessingException.class, () ->
+            consumer.onUsuarioCreado(objectMapper.readTree("{\"empleadoId\":\"E001\",\"email\":\"juan@empresa.com\",\"token\":\"abc\",\"nombre\":\"Juan\"}")));
+        }
+
+        @Test
+        void shouldRethrowWhenUsuarioRecuperacionProcessingFails() throws Exception {
+        NotificacionEventConsumer consumer = new NotificacionEventConsumer(service);
+        when(service.procesarUsuarioRecuperacion("E001", "juan@empresa.com", "abc"))
+            .thenThrow(new IllegalStateException("boom"));
+
+        assertThrows(NotificacionEventProcessingException.class, () ->
+            consumer.onUsuarioRecuperacion(objectMapper.readTree("{\"empleadoId\":\"E001\",\"email\":\"juan@empresa.com\",\"token\":\"abc\"}")));
+        }
 
     @Test
     void shouldConsumeEmpleadoEliminadoAndCallService() throws Exception {
