@@ -68,7 +68,7 @@ RUN groupadd -f docker && usermod -aG docker jenkins
 # Volver al usuario jenkins
 USER jenkins
 
-# Omitir el wizard de setup inicial
+# Omitir el wizard 
 ENV JAVA_OPTS="-Djenkins.install.runSetupWizard=false"
 
 # Pre-instalar plugins usando jenkins-plugin-cli.
