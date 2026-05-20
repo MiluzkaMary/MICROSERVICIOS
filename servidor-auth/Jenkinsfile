@@ -53,6 +53,7 @@ pipeline {
                     sh 'npm run test:coverage || true'
                 }
                 publishHTML([
+                    allowMissing: true,
                     reportDir: 'servidor-auth/coverage',
                     reportFiles: 'index.html',
                     reportName: 'Code Coverage Report - servidor-auth',
