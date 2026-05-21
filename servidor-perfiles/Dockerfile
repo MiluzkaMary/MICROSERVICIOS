@@ -1,4 +1,4 @@
-FROM golang:1.22-alpine AS builder
+FROM golang:1.23-alpine AS builder
 
 WORKDIR /app
 
@@ -11,12 +11,12 @@ RUN i=0; \
     done; \
     [ $i -lt 5 ]
 
-COPY go.mod ./
-RUN go mod download
+COPY go.mod go.sum ./
+COPY vendor ./vendor
 
 COPY . ./
 
-RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -o /bin/perfiles ./cmd/perfiles
+RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -mod=vendor -o /bin/perfiles ./cmd/perfiles
 
 FROM alpine:3.20
 

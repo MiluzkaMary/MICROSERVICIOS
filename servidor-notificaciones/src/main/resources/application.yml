@@ -80,3 +80,22 @@ logging:
     com.empresa.notificaciones: INFO
     org.springframework.amqp: WARN
     org.hibernate: WARN
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,prometheus,metrics
+  endpoint:
+    health:
+      show-details: always
+
+otel:
+  service:
+    name: ${OTEL_SERVICE_NAME:notificaciones-service}
+  exporter:
+    zipkin:
+      endpoint: ${OTEL_EXPORTER_ZIPKIN_ENDPOINT:http://zipkin:9411/api/v2/spans}
+  propagators:
+    - tracecontext
+    - baggage

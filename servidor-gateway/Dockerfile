@@ -13,6 +13,7 @@ RUN npm install --production
 # Copiar archivos de configuración y entrada
 COPY config/ ./config/
 COPY server.js ./
+COPY telemetry.js ./
 
 # Usuario no privilegiado
 USER node

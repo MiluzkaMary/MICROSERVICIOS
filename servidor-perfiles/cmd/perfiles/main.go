@@ -17,10 +17,17 @@ import (
 	"servidor-perfiles/internal/rabbitmq"
 	"servidor-perfiles/internal/repository"
 	"servidor-perfiles/internal/service"
+	"servidor-perfiles/internal/telemetry"
 )
 
 func main() {
 	cfg := config.Load()
+	shutdownTelemetry := telemetry.Init(context.Background())
+	defer func() {
+		if err := shutdownTelemetry(context.Background()); err != nil {
+			log.Printf("error cerrando telemetria: %v", err)
+		}
+	}()
 
 	db, err := sql.Open("pgx", cfg.DatabaseDSN())
 	if err != nil {

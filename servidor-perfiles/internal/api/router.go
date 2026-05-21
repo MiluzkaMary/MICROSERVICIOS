@@ -21,8 +21,10 @@ type PerfilService interface {
 func NewRouter(perfilService PerfilService, jwtSecret string) http.Handler {
 	r := chi.NewRouter()
 	handler := NewHandler(perfilService)
+	r.Use(MetricsMiddleware())
 
 	r.Get("/health", handler.Health)
+	r.Get("/metrics", MetricsHandler)
 	r.Get("/api-docs", handler.APIDocs)
 	r.Get("/api-docs.json", handler.APIDocsJSON)
 	r.With(RequiereAuth(jwtSecret)).Get("/perfiles", handler.ListarPerfiles)

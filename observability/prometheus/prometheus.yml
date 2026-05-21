@@ -1,0 +1,75 @@
+# Configuración de Prometheus para el ecosistema de microservicios
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+  external_labels:
+    cluster: 'microservicios-local'
+
+# Configuración de alertas (se puede expandir con alertas adicionales)
+rule_files:
+  - '/etc/prometheus/alert_rules.yml'
+
+alerting:
+  alertmanagers:
+    - static_configs:
+        - targets: []
+
+scrape_configs:
+  # API Gateway - punto de entrada principal
+  - job_name: 'gateway-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['gateway-service:9095']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+  
+  # Servicio de Empleados (Node.js)
+  - job_name: 'empleados-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['empleados-service:8080']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+
+  # Servicio de Departamentos (Python/FastAPI)
+  - job_name: 'departamentos-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['departamentos-service:8081']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+
+  # Servicio de Perfiles (Go)
+  - job_name: 'perfiles-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['perfiles-service:8082']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+
+  # Servicio de Notificaciones (Java/Spring Boot)
+  - job_name: 'notificaciones-service'
+    metrics_path: '/actuator/prometheus'
+    static_configs:
+      - targets: ['notificaciones-service:8083']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+
+  # Servicio de Auth (Node.js)
+  - job_name: 'auth-service'
+    metrics_path: '/metrics'
+    static_configs:
+      - targets: ['auth-service:8084']
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+
+  # Prometheus mismo
+  - job_name: 'prometheus'
+    static_configs:
+      - targets: ['localhost:9090']

@@ -1,10 +1,21 @@
 from datetime import datetime, timezone
+import os
+import time
 
 from fastapi import Depends, FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, Response
+from prometheus_client import CONTENT_TYPE_LATEST, Counter, Histogram, generate_latest
 from sqlalchemy.exc import SQLAlchemyError
 from sqlalchemy.orm import Session
+from sqlalchemy import text
+
+from opentelemetry import trace
+from opentelemetry.exporter.zipkin.json import ZipkinExporter
+from opentelemetry.instrumentation.fastapi import FastAPIInstrumentor
+from opentelemetry.sdk.resources import Resource
+from opentelemetry.sdk.trace import TracerProvider
+from opentelemetry.sdk.trace.export import BatchSpanProcessor
 
 from .auth import requiere_admin, requiere_auth
 from .database import get_db
@@ -17,6 +28,50 @@ app = FastAPI(
     docs_url="/api-docs",
     openapi_url="/api-docs.json",
 )
+
+SERVICE_NAME = os.getenv("OTEL_SERVICE_NAME", "departamentos-service")
+ZIPKIN_ENDPOINT = os.getenv("OTEL_EXPORTER_ZIPKIN_ENDPOINT", "http://zipkin:9411/api/v2/spans")
+
+http_requests_total = Counter(
+    "http_requests_total",
+    "Total de peticiones HTTP",
+    ["service", "method", "route", "status"],
+)
+
+http_request_duration_seconds = Histogram(
+    "http_request_duration_seconds",
+    "Duracion de peticiones HTTP en segundos",
+    ["service", "method", "route", "status"],
+)
+
+
+def init_tracing() -> None:
+    resource = Resource.create({"service.name": SERVICE_NAME})
+    trace_provider = TracerProvider(resource=resource)
+    span_processor = BatchSpanProcessor(ZipkinExporter(endpoint=ZIPKIN_ENDPOINT))
+    trace_provider.add_span_processor(span_processor)
+    trace.set_tracer_provider(trace_provider)
+    FastAPIInstrumentor.instrument_app(app)
+
+
+init_tracing()
+
+
+@app.middleware("http")
+async def metrics_middleware(request: Request, call_next):
+    start = time.perf_counter()
+    response = await call_next(request)
+    elapsed = time.perf_counter() - start
+    route = request.url.path
+    labels = {
+        "service": SERVICE_NAME,
+        "method": request.method,
+        "route": route,
+        "status": str(response.status_code),
+    }
+    http_requests_total.labels(**labels).inc()
+    http_request_duration_seconds.labels(**labels).observe(elapsed)
+    return response
 
 
 def _timestamp() -> str:
@@ -90,9 +145,28 @@ async def validation_exception_handler(request: Request, exc: RequestValidationE
     )
 
 
-@app.get("/health", status_code=200)
-async def health():
-    return {"status": "OK", "service": "servidor-departamentos"}
+@app.get("/health")
+async def health(db: Session = Depends(get_db)):
+    checks = {"database": "UP", "messageBroker": "N/A"}
+    status = "UP"
+    status_code = 200
+
+    try:
+        db.execute(text("SELECT 1"))
+    except Exception:
+        checks["database"] = "DOWN"
+        status = "DOWN"
+        status_code = 503
+
+    return JSONResponse(
+        status_code=status_code,
+        content={"status": status, "service": "departamentos-service", "checks": checks},
+    )
+
+
+@app.get("/metrics")
+async def metrics():
+    return Response(content=generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
 
 @app.post("/departamentos", status_code=201)

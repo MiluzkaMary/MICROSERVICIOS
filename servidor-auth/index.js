@@ -2,6 +2,9 @@
  * Punto de entrada de la aplicacion
  * Inicia el servidor
  */
+const { initTelemetry } = require('./src/config/telemetry');
+initTelemetry('auth-service');
+
 const app = require('./src/app');
 const rabbitmq = require('./src/config/rabbitmq');
 

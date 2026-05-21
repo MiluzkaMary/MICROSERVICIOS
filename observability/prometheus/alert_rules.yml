@@ -1,0 +1,48 @@
+# Reglas de alerta para Prometheus
+groups:
+  - name: microservicios_alerts
+    interval: 30s
+    rules:
+      # Alerta 1: Servicio Caído
+      - alert: ServiceDown
+        expr: up{job=~".*-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "{{ $labels.job }} está caído"
+          description: "El servicio {{ $labels.job }} no responde al scraping de Prometheus hace más de 1 minuto"
+
+      # Alerta 2: Alta Tasa de Errores
+      - alert: HighErrorRate
+        expr: |
+          (sum(rate(http_requests_total{status=~"5.."}[5m])) by (job) / 
+           sum(rate(http_requests_total[5m])) by (job)) > 0.1
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.job }} tiene alta tasa de errores"
+          description: "El servicio {{ $labels.job }} está retornando más del 10% de errores 5xx"
+
+      # Alerta 3: Alta Latencia
+      - alert: HighLatency
+        expr: |
+          (sum(rate(http_request_duration_seconds_sum[5m])) by (job) / 
+           sum(rate(http_request_duration_seconds_count[5m])) by (job)) > 2
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.job }} tiene alta latencia"
+          description: "La latencia promedio de {{ $labels.job }} supera los 2 segundos"
+
+      # Alerta 4: Database Connection Issues
+      - alert: DatabaseConnectionError
+        expr: increase(db_connections_failed_total[5m]) > 0
+        for: 2m
+        labels:
+          severity: warning
+        annotations:
+          summary: "{{ $labels.job }} tiene errores de conexión a BD"
+          description: "El servicio {{ $labels.job }} está experimentando problemas al conectarse a la base de datos"

@@ -384,3 +384,114 @@ Swagger:
 - MESSAGE_BROKER_RABBITMQ.md
 - CIRCUIT_BREAKER.md
 - e2e-tests/README.md
+
+## 16. Reto 7 - Observabilidad
+
+### 16.1 Stack implementado
+
+- Prometheus (recoleccion de metricas): http://localhost:9091
+- Grafana (dashboards y alertas): http://localhost:3000
+- Zipkin (trazabilidad distribuida): http://localhost:9411
+- Loki (almacen de logs): http://localhost:3100
+- Promtail (agente de recoleccion de logs Docker)
+
+Nota: Prometheus publica en `9091` para evitar colision de puertos con Jenkins (`9090`).
+
+### 16.2 Tres pilares de observabilidad
+
+- Metricas: comportamiento agregado del sistema (latencia, throughput, errores).
+- Logs: evidencia detallada de eventos para investigacion.
+- Trazas: recorrido completo de una solicitud entre servicios.
+
+### 16.3 Pull vs Push
+
+- Pull (Prometheus): Prometheus consulta periodicamente `/metrics` en cada servicio.
+- Push (Zipkin/OTel): cada servicio envia spans al endpoint Zipkin (`/api/v2/spans`).
+
+### 16.4 OpenTelemetry y CNCF
+
+OpenTelemetry es el estandar abierto de observabilidad de la CNCF para instrumentar servicios de forma agnostica al lenguaje. Se configuro por servicio con:
+
+- `OTEL_SERVICE_NAME`
+- `OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans`
+- `OTEL_PROPAGATORS=tracecontext,baggage`
+
+### 16.5 W3C Trace Context
+
+La propagacion de contexto distribuido usa cabeceras estandar W3C (`traceparent` y `tracestate`) para mantener el mismo `traceId` en llamadas entre servicios de distinto lenguaje.
+
+### 16.6 Diagrama de arquitectura (Mermaid)
+
+```mermaid
+flowchart LR
+	Client[Cliente HTTP] --> GW[gateway-service]
+	GW --> AUTH[auth-service]
+	GW --> EMP[empleados-service]
+	GW --> DEP[departamentos-service]
+	GW --> PERF[perfiles-service]
+	GW --> NOTI[notificaciones-service]
+
+	EMP --> RMQ[(RabbitMQ)]
+	AUTH --> RMQ
+	RMQ --> PERF
+	RMQ --> NOTI
+
+	PROM[Prometheus] -->|Pull /metrics| GW
+	PROM -->|Pull /metrics| AUTH
+	PROM -->|Pull /metrics| EMP
+	PROM -->|Pull /metrics| DEP
+	PROM -->|Pull /metrics| PERF
+	PROM -->|Pull /actuator/prometheus| NOTI
+
+	GW -->|Push traces| ZIP[Zipkin]
+	AUTH -->|Push traces| ZIP
+	EMP -->|Push traces| ZIP
+	DEP -->|Push traces| ZIP
+	PERF -->|Push traces| ZIP
+	NOTI -->|Push traces| ZIP
+
+	PROMTAIL[Promtail] -->|Push logs| LOKI[Loki]
+	GRAF[Grafana] --> PROM
+	GRAF --> LOKI
+```
+
+### 16.7 Endpoints de salud y metricas
+
+- gateway-service: `GET /health` y `GET /metrics` en puerto interno `9095`
+- empleados-service: `GET /health`, `GET /metrics`
+- auth-service: `GET /health`, `GET /metrics`
+- departamentos-service: `GET /health`, `GET /metrics`
+- perfiles-service: `GET /health`, `GET /metrics`
+- notificaciones-service: `GET /health`, `GET /actuator/prometheus`
+
+### 16.8 Configuracion versionada
+
+- `observability/prometheus/prometheus.yml`
+- `observability/prometheus/alert_rules.yml`
+- `observability/grafana/provisioning/datasources/prometheus.yml`
+- `observability/grafana/provisioning/dashboards/dashboards.yml`
+- `observability/grafana/provisioning/dashboards/microservicios-main.json`
+- `observability/promtail/promtail-config.yml`
+- `observability/OBSERVABILITY-GUIDE.md`
+- `observability/DEPENDENCIES.md`
+
+### 16.9 Eleccion de servidor de trazas
+
+Se eligio Zipkin por simplicidad de despliegue local, integracion directa con exportadores OTel y menor friccion para pruebas del flujo distribuido.
+
+### 16.10 Alertas configuradas
+
+En `observability/prometheus/alert_rules.yml` se incluyen reglas de:
+
+- Servicio caido (`ServiceDown`)
+- Alta tasa de errores (`HighErrorRate`)
+- Alta latencia (`HighLatency`)
+
+### 16.11 Pruebas de caos sugeridas
+
+1. Levantar stack completo.
+2. Verificar targets UP en Prometheus.
+3. Generar trafico via gateway.
+4. Detener un servicio (`departamentos-service`) y validar estado DOWN + alerta.
+5. Reanudar servicio y validar recuperacion.
+

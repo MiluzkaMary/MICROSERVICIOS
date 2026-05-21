@@ -13,6 +13,9 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - DB_NAME=empleados_db
       - NODE_ENV=production
+      - OTEL_SERVICE_NAME=empleados-service
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - OTEL_PROPAGATORS=tracecontext,baggage
       # Configuración JWT
       - JWT_SECRET=${JWT_SECRET}
       # Configuración para comunicación con servicio de departamentos
@@ -70,6 +73,9 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - DB_NAME=auth_db
       - NODE_ENV=production
+      - OTEL_SERVICE_NAME=auth-service
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - OTEL_PROPAGATORS=tracecontext,baggage
       # Configuración JWT
       - JWT_SECRET=${JWT_SECRET}
       - JWT_EXPIRATION=${JWT_EXPIRATION:-24h}
@@ -124,6 +130,9 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - DB_NAME=departamentos_db
       - PYTHONUNBUFFERED=1
+      - OTEL_SERVICE_NAME=departamentos-service
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - OTEL_PROPAGATORS=tracecontext,baggage
       # Configuración JWT
       - JWT_SECRET=${JWT_SECRET}
     ports:
@@ -169,6 +178,9 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - DB_NAME=perfiles_db
       - NODE_ENV=production
+      - OTEL_SERVICE_NAME=perfiles-service
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - OTEL_PROPAGATORS=tracecontext,baggage
       # Configuración JWT
       - JWT_SECRET=${JWT_SECRET}
       # Configuración RabbitMQ
@@ -221,6 +233,9 @@ services:
       - DB_PASSWORD=${DB_PASSWORD:-postgres}
       - DB_NAME=notificaciones_db
       - NODE_ENV=production
+      - OTEL_SERVICE_NAME=notificaciones-service
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - OTEL_PROPAGATORS=tracecontext,baggage
       # Configuración JWT
       - JWT_SECRET=${JWT_SECRET}
       # Configuración SMTP para envío de emails (Mailhog)
@@ -324,6 +339,10 @@ services:
     environment:
       - PORT=8085
       - JWT_SECRET=${JWT_SECRET}
+      - OTEL_SERVICE_NAME=gateway-service
+      - OTEL_EXPORTER_ZIPKIN_ENDPOINT=http://zipkin:9411/api/v2/spans
+      - OTEL_PROPAGATORS=tracecontext,baggage
+      - OBSERVABILITY_PORT=9095
     ports:
       - "8085:8085"
     depends_on:
@@ -417,6 +436,104 @@ services:
     networks:
       - microservicios-network
 
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: prometheus
+    restart: unless-stopped
+    ports:
+      - "9091:9090"
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    volumes:
+      - ./observability/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - ./observability/prometheus/alert_rules.yml:/etc/prometheus/alert_rules.yml:ro
+      - prometheus_data:/prometheus
+    networks:
+      - microservicios-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9090/-/healthy"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: grafana
+    restart: unless-stopped
+    ports:
+      - "3000:3000"
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_PATHS_PROVISIONING=/etc/grafana/provisioning
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+    depends_on:
+      prometheus:
+        condition: service_healthy
+      loki:
+        condition: service_healthy
+    networks:
+      - microservicios-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  zipkin:
+    image: openzipkin/zipkin:latest
+    container_name: zipkin
+    restart: unless-stopped
+    ports:
+      - "9411:9411"
+    networks:
+      - microservicios-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:9411/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  loki:
+    image: grafana/loki:latest
+    container_name: loki
+    restart: unless-stopped
+    ports:
+      - "3100:3100"
+    command: -config.file=/etc/loki/local-config.yaml
+    volumes:
+      - loki_data:/loki
+    networks:
+      - microservicios-network
+    healthcheck:
+      test: ["CMD", "/usr/bin/loki", "-version"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+
+  promtail:
+    image: grafana/promtail:latest
+    container_name: promtail
+    restart: unless-stopped
+    command: -config.file=/etc/promtail/promtail-config.yml
+    volumes:
+      - ./observability/promtail/promtail-config.yml:/etc/promtail/promtail-config.yml:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+    depends_on:
+      loki:
+        condition: service_healthy
+    networks:
+      - microservicios-network
+
 networks:
   microservicios-network:
     driver: bridge
@@ -434,3 +551,6 @@ volumes:
   sonarqube_extensions:
   sonar_db_data:
   registry_data:
+  prometheus_data:
+  grafana_data:
+  loki_data:

@@ -7,3 +7,8 @@ pydantic
 pytest
 pytest-cov
 httpx
+prometheus-client
+opentelemetry-api
+opentelemetry-sdk
+opentelemetry-exporter-zipkin
+opentelemetry-instrumentation-fastapi

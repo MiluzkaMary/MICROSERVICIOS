@@ -1,0 +1,34 @@
+# Configuración de notificadores/contact points en Grafana
+apiVersion: 1
+
+contactPoints:
+  - orgId: 1
+    name: 'Email Notification'
+    receivers:
+      - uid: email-notification
+        type: email
+        settings:
+          addresses: admin@empresa.com
+          singleEmail: true
+
+  - orgId: 1
+    name: 'Console Logs'
+    receivers:
+      - uid: console-logs
+        type: email
+        settings:
+          addresses: logs@empresa.com
+
+# Política de enrutamiento de alertas
+routeTree:
+  receiver: 'Console Logs'
+  routes:
+    - receiver: 'Email Notification'
+      matchers:
+        - name: severity
+          value: critical
+          isRegex: false
+      continue: true
+      groupByStr:
+        - alertname
+        - job

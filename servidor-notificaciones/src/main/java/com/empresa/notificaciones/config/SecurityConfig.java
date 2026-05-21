@@ -75,6 +75,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Rutas públicas
                 .requestMatchers(HttpMethod.GET,  "/health").permitAll()
+                .requestMatchers(HttpMethod.GET,  "/actuator/**").permitAll()
                 .requestMatchers(HttpMethod.GET,  "/api-docs/**").permitAll()
                 .requestMatchers(HttpMethod.GET,  "/api-docs.json").permitAll()
                 .requestMatchers(HttpMethod.GET,  "/swagger-ui/**").permitAll()

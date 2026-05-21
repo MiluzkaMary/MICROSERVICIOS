@@ -1,0 +1,51 @@
+# Configuración de Promtail para recolectar logs de Docker
+server:
+  http_listen_port: 9080
+  log_level: info
+
+positions:
+  filename: /tmp/positions.yaml
+
+clients:
+  - url: http://loki:3100/loki/api/v1/push
+
+scrape_configs:
+  # Descubrimiento automático de contenedores Docker
+  - job_name: docker-containers
+    docker_sd_configs:
+      - host: unix:///var/run/docker.sock
+        refresh_interval: 5s
+    relabel_configs:
+      # Usar el nombre del contenedor como etiqueta
+      - source_labels: ['__meta_docker_container_name']
+        target_label: 'container_name'
+      
+      # Usar el nombre del servicio de docker-compose como etiqueta
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        target_label: 'service'
+      
+      # Usar el nombre de la imagen como etiqueta
+      - source_labels: ['__meta_docker_container_image_name']
+        target_label: 'image'
+      
+      # Extraer el nombre del proyecto de docker-compose
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_project']
+        target_label: 'project'
+      
+      # Filtrar contenedores por label (solo servicios relevantes)
+      - source_labels: ['__meta_docker_container_label_com_docker_compose_service']
+        regex: '(empleados-service|auth-service|departamentos-service|perfiles-service|notificaciones-service|gateway-service|rabbitmq|database-empleados|database-auth|database-departamentos|database-perfiles|database-notificaciones|sonarqube|jenkins|prometheus|grafana|loki|promtail|zipkin)'
+        action: keep
+    pipeline_stages:
+      # Parsear logs JSON
+      - json:
+          expressions:
+            level: level
+            service: service
+            traceId: traceId
+            message: message
+      # Agregar la etiqueta de servicio desde el atributo del contenedor
+      - labels:
+          service:
+          level:
+          traceId:
