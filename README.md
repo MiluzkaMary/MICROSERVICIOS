@@ -392,7 +392,9 @@ Swagger:
 - Prometheus (recoleccion de metricas): http://localhost:9091
 - Grafana (dashboards y alertas): http://localhost:3000
 - Zipkin (trazabilidad distribuida): http://localhost:9411
-- Loki (almacen de logs): http://localhost:3100
+- Loki (almacen de logs y API, sin GUI propia): http://localhost:3100
+
+La interfaz para consultar logs en Loki es Grafana, no la raiz de Loki. Para ver logs abre http://localhost:3000 y usa la fuente de datos Loki.
 - Promtail (agente de recoleccion de logs Docker)
 
 Nota: Prometheus publica en `9091` para evitar colision de puertos con Jenkins (`9090`).

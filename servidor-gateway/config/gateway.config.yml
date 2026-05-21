@@ -9,6 +9,12 @@ admin:
 # API Endpoints - Rutas expuestas al exterior
 # ==========================================
 apiEndpoints:
+  # Health del gateway: accesible desde el puerto publico 8085
+  healthApi:
+    host: '*'
+    paths:
+      - '/health'
+
   # Auth: rutas públicas (login, recuperación de contraseña)
   authApi:
     host: '*'
@@ -48,6 +54,8 @@ apiEndpoints:
 # Service Endpoints - Microservicios internos
 # ==========================================
 serviceEndpoints:
+  gatewayHealthService:
+    url: 'http://127.0.0.1:9095'
   authService:
     url: 'http://auth-service:8084'
   empleadosService:
@@ -70,6 +78,16 @@ policies:
 # Pipelines - Flujo de procesamiento
 # ==========================================
 pipelines:
+  # Health del gateway sin autenticacion
+  healthPipeline:
+    apiEndpoints:
+      - healthApi
+    policies:
+      - proxy:
+          - action:
+              serviceEndpoint: gatewayHealthService
+              changeOrigin: true
+
   # ----------------------------------------
   # Auth Pipeline: SIN validación JWT
   # Permite acceso público a login, recover y reset
